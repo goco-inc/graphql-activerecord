@@ -9,7 +9,21 @@ module GraphQL
         ATTRIBUTE_TYPES[attr_type.name] = attr_type
 
         # Create a method for defining this type of object inside of a schema
-        
+        ModelTypeConfig.send(:define_method, "#{attr_type.name}") do |*identifiers, **options|
+          ensure_has_model_type(attr_type.name)
+
+          missing_identifiers = attr_type.identifiers[identifiers.length..-1]
+          fail ArgumentError, "You need to provide #{attr_type.identifiers.length} arguments to add a #{attr_type.name} field (missing: #{missing_identifiers.join(', ')})" unless identifiers.length == attr_type.identifiers.length
+
+          DefinitionHelpers.define_attribute_type_field(self, resolved_model_type, [], attr_type, identifiers, options)
+        end
+
+        ProxyBlock.send(:define_method, "#{attr_type.name}") do |*identifiers, **options|
+          missing_identifiers = attr_type.identifiers[identifiers.length..-1]
+          fail ArgumentError, "You need to provide #{attr_type.identifiers.length} arguments to add a #{attr_type.name} field (missing: #{missing_identifiers.join(', ')})" unless identifiers.length == attr_type.identifiers.length
+
+          DefinitionHelpers.define_attribute_type_field(@definer, @model_type, @path, attr_type, identifiers, options)
+        end
 
         # Create a method for generating a global ID for this type
         define_singleton_method("#{attr_type.name}_id") do |model_type, model_id, *identifiers|
