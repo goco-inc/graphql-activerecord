@@ -1,10 +1,10 @@
 $LOAD_PATH.push File.expand_path('../lib', __FILE__)
 
-require 'graphql/activerecord/version'
+require 'graphql/models/version'
 
 Gem::Specification.new do |s|
   s.name = 'graphql-activerecord'
-  s.version = GraphQL::ActiveRecord::Version
+  s.version = GraphQL::Models::VERSION
   s.date = Date.today.to_s
   s.summary = "ActiveRecord helpers for GraphQL + Relay"
   s.description = "Build Relay-compatible GraphQL schemas based on ActiveRecord models"
@@ -18,6 +18,5 @@ Gem::Specification.new do |s|
   s.test_files = Dir["spec/**/*"]
 
   s.add_runtime_dependency "graphql", "~> 0.8"
-  s.add_runtime_dependency "graphql-relay-ruby", "~> 0.6"
-  s.add_runtime_dependency "activerecord", "~> 4.2.0"
+  s.add_runtime_dependency "graphql-relay", "~> 0.6"
 end
