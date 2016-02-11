@@ -103,8 +103,8 @@ module GraphQL
         end
       end
 
-      def self.define_attribute_type_field(definer, model_type, path, attr_type, identifiers, options)
-        field_name = options[:name] || attr_type.name.to_s.camelize(:lower).to_sym
+      def self.define_attribute_type_field(definer, model_type, path, attr_type, field_name, options)
+        field_name = options[:name] || field_name.to_s.camelize(:lower).to_sym
 
         definer.field field_name, attr_type.graph_type_proc do
           resolve -> (base_model, args, context) do
@@ -112,11 +112,11 @@ module GraphQL
             return nil unless model
             return nil unless context.can?(:read, model)
 
-            return attr_type.resolve(model, *identifiers)
+            return attr_type.resolve(model, field_name)
           end
         end
       end
-      
+
     end
   end
 end
