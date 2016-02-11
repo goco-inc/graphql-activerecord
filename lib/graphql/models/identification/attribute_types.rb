@@ -11,7 +11,7 @@ module GraphQL
         (?<name>#{VALID_IDENTIFIER}) # match the name of the virtual type
         \(( # parameters, wrapped with parentheses
           (?<modelType>#{VALID_IDENTIFIER}) # type of model that the field was used on
-          (?<parameters>(,#{VALID_IDENTIFIER})*) # additional parameters
+          ,(?<fieldName>#{VALID_IDENTIFIER}) # name of the field
         )\)
         \z
       }x
@@ -32,8 +32,7 @@ module GraphQL
         model = Models.resolve_model_type(match['modelType'], model_id, context)
         return nil unless model
 
-        parameters = match['parameters'].split(',')
-        attribute_type.resolve(model, *parameters)
+        attribute_type.resolve(model, match['fieldName'])
       end
     end
   end
