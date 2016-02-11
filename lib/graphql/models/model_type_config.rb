@@ -51,29 +51,33 @@ module GraphQL
 
       # Adds a field to the GraphQL type by looking up an attribute on the model. The name of the field will be
       # a camelized version of the attribute name.
+      def ensure_has_model_type(method)
+        fail ApiExceptions::InvalidOperationError.new("You must call model_type before using the #{method} method.") unless resolved_model_type
+      end
+
       def attr(name, **options)
-        fail ApiExceptions::InvalidOperationError.new("You must call model_type before using the #{__method__} method.") unless resolved_model_type
+        ensure_has_model_type(__method__)
         DefinitionHelpers.define_attribute(self, resolved_model_type, [], name, options)
       end
 
-      def attachment(name, **options)
-        fail ApiExceptions::InvalidOperationError.new("You must call model_type before using the #{__method__} method.") unless resolved_model_type
-        DefinitionHelpers.define_attachment(self, resolved_model_type, [], name, options)
-      end
+      # def attachment(name, **options)
+      #   ensure_has_model_type(__method__)
+      #   DefinitionHelpers.define_attachment(self, resolved_model_type, [], name, options)
+      # end
 
       def has_one(association, **options)
-        fail ApiExceptions::InvalidOperationError.new("You must call model_type before using the #{__method__} method.") unless resolved_model_type
+        ensure_has_model_type(__method__)
         DefinitionHelpers.define_has_one(self, resolved_model_type, [], association, options)
       end
 
       def has_many_connection(association, **options)
-        fail ApiExceptions::InvalidOperationError.new("You must call model_type before using the #{__method__} method.") unless resolved_model_type
+        ensure_has_model_type(__method__)
         DefinitionHelpers.define_has_many_connection(self, resolved_model_type, [], association, options)
 
       end
 
       def has_many_array(association, **options)
-        fail ApiExceptions::InvalidOperationError.new("You must call model_type before using the #{__method__} method.") unless resolved_model_type
+        ensure_has_model_type(__method__)
         DefinitionHelpers.define_has_many_array(self, resolved_model_type, [], association, options)
       end
     end
