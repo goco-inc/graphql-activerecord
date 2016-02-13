@@ -104,9 +104,9 @@ module GraphQL
       end
 
       def self.define_attribute_type_field(definer, model_type, path, attr_type, field_name, options)
-        field_name = options[:name] || field_name.to_s.camelize(:lower).to_sym
+        camel_name = options[:name] || field_name.to_s.camelize(:lower).to_sym
 
-        definer.field field_name, attr_type.graph_type_proc do
+        definer.field camel_name, attr_type.graph_type_proc do
           resolve -> (base_model, args, context) do
             model = DefinitionHelpers.traverse_path(base_model, path, context)
             return nil unless model
