@@ -21,14 +21,7 @@ module GraphQL
         raise ArgumentError.new("The attribute #{name} wasn't found on model #{model_type.name}.") unless col
 
         if model_type.respond_to?(:defined_enums) && model_type.defined_enums.include?(name.to_s)
-          graphql_type = GraphQL::EnumType.define do
-            name "#{model_type.name}#{name.to_s.classify}"
-            description "#{name.to_s.titleize} field on #{model_type.name.titleize}"
-
-            model_type.defined_enums[name.to_s].keys.each do |enum_val|
-              value(enum_val, enum_val.titleize)
-            end
-          end
+          graphql_type = get_enum_type(model_type, name)
         else
           graphql_type = type_to_graphql_type(col.type)
         end
@@ -42,6 +35,21 @@ module GraphQL
           camel_name: name.to_s.camelize(:lower).to_sym,
           graphql_type: graphql_type
         })
+      end
+
+      def self.get_enum_type(model_type, name)
+        defined_enum_types = model_type.instance_exec do
+          @_graphql_enum_types ||= {}.with_indifferent_access
+        end
+
+        defined_enum_types[name] ||= GraphQL::EnumType.define do
+          name "#{model_type.name}#{name.to_s.classify}"
+          description "#{name.to_s.titleize} field on #{model_type.name.titleize}"
+
+          model_type.defined_enums[name.to_s].keys.each do |enum_val|
+            value(enum_val, enum_val.titleize)
+          end
+        end
       end
 
       def self.range_to_graphql(value)
