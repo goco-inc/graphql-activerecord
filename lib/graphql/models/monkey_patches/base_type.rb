@@ -3,6 +3,6 @@ module GraphQL::BaseType::HasPossibleTypes
   remove_const('DEFAULT_RESOLVE_TYPE')
 
   DEFAULT_RESOLVE_TYPE = -> (object) do
-    GraphQL::Models::NodeIdentification.type_from_object(object)
+    GraphQL::Relay::GlobalNodeIdentification.type_from_object(object)
   end
 end
