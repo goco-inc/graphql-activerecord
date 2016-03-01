@@ -12,7 +12,8 @@ module GraphQL
         when :daterange, :tsrange
           types[!types.String]
         else
-          types.String
+          resolved = ScalarTypes.registered_type(type) || types.String
+          resolved.is_a?(Proc) ? resolved.call : resolved
         end
       end
 
