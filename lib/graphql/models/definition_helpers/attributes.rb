@@ -39,7 +39,13 @@ module GraphQL
 
       def self.get_enum_type(model_type, name)
         enum_type = model_type.graphql_enum_types[name]
-        enum_type ||= model_type.graphql_enum(name, { upcase: false })
+
+        unless enum_type
+          warn "[DEPRECATED] Automatically defined enums on models is deprecated. Call `graphql_enum :#{name}` explicitly on #{model_type.name} instead."
+          enum_type = model_type.graphql_enum(name, { upcase: false })
+        end
+
+        enum_type
       end
 
       def self.range_to_graphql(value)
