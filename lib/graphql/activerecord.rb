@@ -3,6 +3,7 @@ require 'graphql'
 require 'graphql/models/monkey_patches/base_type'
 require 'graphql/models/monkey_patches/graphql_relay_global_node_identification'
 require 'graphql/models/monkey_patches/graphql_query_context'
+require 'graphql/models/active_record_extension'
 
 # Helpers
 require 'graphql/models/definer'

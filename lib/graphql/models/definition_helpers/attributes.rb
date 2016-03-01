@@ -38,18 +38,8 @@ module GraphQL
       end
 
       def self.get_enum_type(model_type, name)
-        defined_enum_types = model_type.instance_exec do
-          @_graphql_enum_types ||= {}.with_indifferent_access
-        end
-
-        defined_enum_types[name] ||= GraphQL::EnumType.define do
-          name "#{model_type.name}#{name.to_s.classify}"
-          description "#{name.to_s.titleize} field on #{model_type.name.titleize}"
-
-          model_type.defined_enums[name.to_s].keys.each do |enum_val|
-            value(enum_val, enum_val.titleize)
-          end
-        end
+        enum_type = model_type.graphql_enum_types[name]
+        enum_type ||= model_type.graphql_enum(name, { upcase: false })
       end
 
       def self.range_to_graphql(value)
@@ -80,7 +70,12 @@ module GraphQL
             if column.is_range
               DefinitionHelpers.range_to_graphql(model.public_send(attribute))
             else
-              model.public_send(attribute)
+              if model_type.graphql_resolvers.include?(attribute)
+                resolve_proc = model_type.graphql_resolvers[attribute]
+                model.instance_exec(&resolve_proc)
+              else
+                model.public_send(attribute)
+              end
             end
           end
         end
