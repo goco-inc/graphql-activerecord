@@ -32,6 +32,8 @@ module GraphQL
         @interfaces
       end
 
+      alias_method :noauth_field, :field
+      
       def field(*outer_args)
         field = super
 

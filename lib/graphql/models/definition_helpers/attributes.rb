@@ -64,7 +64,7 @@ module GraphQL
 
         field_name = options[:name] || column.camel_name
 
-        definer.field field_name, column.graphql_type do
+        definer.noauth_field field_name, column.graphql_type do
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 

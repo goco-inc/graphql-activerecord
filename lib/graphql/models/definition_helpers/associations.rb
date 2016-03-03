@@ -57,10 +57,7 @@ module GraphQL
           resolve -> (base_model, args, context) do
             model = DefinitionHelpers.traverse_path(base_model, path, context)
             return nil unless model
-
-            value = model.public_send(association)
-            return nil unless context.can?(:read, value)
-            return value
+            return model.public_send(association)
           end
         end
       end
