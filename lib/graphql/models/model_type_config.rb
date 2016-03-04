@@ -39,7 +39,7 @@ module GraphQL
 
         resolver = field.resolve_proc
         field.resolve = -> (model, args, context) do
-          context.authorize!(:read, model)
+          return nil unless context.can?(:read, model)
           resolver.call(model, args, context)
         end
 
@@ -61,11 +61,6 @@ module GraphQL
         ensure_has_model_type(__method__)
         DefinitionHelpers.define_attribute(self, resolved_model_type, [], name, options)
       end
-
-      # def attachment(name, **options)
-      #   ensure_has_model_type(__method__)
-      #   DefinitionHelpers.define_attachment(self, resolved_model_type, [], name, options)
-      # end
 
       def has_one(association, **options)
         ensure_has_model_type(__method__)

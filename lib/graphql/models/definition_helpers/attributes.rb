@@ -72,7 +72,7 @@ module GraphQL
             model = DefinitionHelpers.traverse_path(base_model, path, context)
 
             return nil unless model
-            context.authorize!(:read, model)
+            return nil unless context.can?(:read, model)
 
             if column.is_range
               DefinitionHelpers.range_to_graphql(model.public_send(attribute))
