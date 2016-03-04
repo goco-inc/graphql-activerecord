@@ -9,14 +9,14 @@ module GraphQL
       end
 
       def standard_fields
-        global_id_field :id
+        noauth_field :id, field: GraphQL::Relay::GlobalIdField.new(name)
         interfaces [NodeIdentification.interface]
 
-        field :rid, !types.String do
+        noauth_field :rid, !types.String do
           resolve proc { |model| model.id }
         end
 
-        field :rtype, !types.String do
+        noauth_field :rtype, !types.String do
           resolve proc { |model| model.class.name }
         end
 
