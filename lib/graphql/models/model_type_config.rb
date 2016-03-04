@@ -33,13 +33,13 @@ module GraphQL
       end
 
       alias_method :noauth_field, :field
-      
+
       def field(*outer_args)
         field = super
 
         resolver = field.resolve_proc
         field.resolve = -> (model, args, context) do
-          return nil unless context.can?(:read, model)
+          context.authorize!(:read, model)
           resolver.call(model, args, context)
         end
 
