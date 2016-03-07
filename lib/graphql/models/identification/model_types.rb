@@ -7,10 +7,7 @@ module GraphQL
 
       def self.resolve_model_type(name, id, context)
         model_class = name.classify.constantize
-        result = model_class.where(id: id)
-        result = result.accessible_by(context.ability) if context.ability
-
-        result.first
+        model_class.find_by(id: id)
       end
     end
   end
