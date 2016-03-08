@@ -21,8 +21,8 @@ module GraphQL
         col = model_type.columns.detect { |c| c.name == name.to_s }
         raise ArgumentError.new("The attribute #{name} wasn't found on model #{model_type.name}.") unless col
 
-        if model_type.respond_to?(:defined_enums) && model_type.defined_enums.include?(name.to_s)
-          graphql_type = get_enum_type(model_type, name)
+        if model_type.graphql_enum_types.include?(name)
+          graphql_type = model_type.graphql_enum_types[name]
         else
           graphql_type = type_to_graphql_type(col.type)
         end
@@ -36,17 +36,6 @@ module GraphQL
           camel_name: name.to_s.camelize(:lower).to_sym,
           graphql_type: graphql_type
         })
-      end
-
-      def self.get_enum_type(model_type, name)
-        enum_type = model_type.graphql_enum_types[name]
-
-        unless enum_type
-          warn "[DEPRECATED] Automatically defined enums on models is deprecated. Call `graphql_enum :#{name}` explicitly on #{model_type.name} instead."
-          enum_type = model_type.graphql_enum(name, { upcase: false })
-        end
-
-        enum_type
       end
 
       def self.range_to_graphql(value)
