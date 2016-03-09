@@ -45,6 +45,8 @@ module GraphQL
         end
       end
 
+
+
       def self.define_has_one(definer, model_type, path, association, options)
         reflection = model_type.reflect_on_association(association)
 
@@ -55,9 +57,7 @@ module GraphQL
 
         definer.field camel_name, resolve_has_one_type(reflection) do
           resolve -> (base_model, args, context) do
-            model = DefinitionHelpers.traverse_path(base_model, path, context)
-            return nil unless model
-            return model.public_send(association)
+            DefinitionHelpers.load_and_traverse(base_model, [*path, association], context)
           end
         end
       end
@@ -73,9 +73,9 @@ module GraphQL
 
         definer.field camel_name, type_lambda do
           resolve -> (base_model, args, context) do
-            model = DefinitionHelpers.traverse_path(base_model, path, context)
-            return nil unless model
-            return GraphSupport.secure(model.public_send(association), context)
+            DefinitionHelpers.load_and_traverse(base_model, [*path, association], context).then do |result|
+              Array.wrap(result).select { |v| context.can?(:read, v) }
+            end
           end
         end
       end
