@@ -7,6 +7,8 @@ require 'graphql/models/active_record_extension'
 
 # Helpers
 require 'graphql/models/definer'
+require 'graphql/models/association_load_request'
+require 'graphql/models/loader'
 
 # Order matters...
 require 'graphql/models/identification'

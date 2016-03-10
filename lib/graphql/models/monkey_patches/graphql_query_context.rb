@@ -11,4 +11,8 @@ class GraphQL::Query::Context
     return true unless ability
     ability.can?(action, subject, *extra_args)
   end
+
+  def model_cache
+    @model_cache ||= {}
+  end
 end

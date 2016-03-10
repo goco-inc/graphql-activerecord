@@ -5,6 +5,29 @@ module GraphQL
         GraphQL::DefinitionHelpers::TypeDefiner.instance
       end
 
+      # Returns a promise that will eventually resolve to the model that is at the end of the path
+      def self.load_and_traverse(current_model, path, context)
+        return Promise.resolve(current_model) if path.length == 0
+
+        association = current_model.association(path[0])
+
+        # If the model is already loaded, we can return it immediately
+        # Else if we know that the associated model is nil, we can return nil immediately
+        if association.loaded?
+          return Promise.resolve(association.target)
+        elsif association.reflection.macro == :belongs_to && current_model.send(association.reflection.foreign_key).nil?
+          return Promise.resolve(nil)
+        end
+
+        request = AssociationLoadRequest.new(current_model, path[0], context)
+        Loader.for(request.target_class).load(request).then do |next_model|
+          next nil unless next_model
+          next next_model if path.length == 1
+
+          DefinitionHelpers.load_and_traverse(next_model, path[1..-1], context)
+        end
+      end
+
       def self.traverse_path(base_model, path, context)
         model = base_model
         path.each do |segment|
@@ -32,11 +55,11 @@ module GraphQL
 
         definer.noauth_field camel_name, attr_type.graph_type_proc do
           resolve -> (base_model, args, context) do
-            model = DefinitionHelpers.traverse_path(base_model, path, context)
-            return nil unless model
-            return nil unless context.can?(:read, model)
-
-            return attr_type.resolve(model, field_name)
+            DefinitionHelpers.load_and_traverse(base_model, path, context).then do |model|
+              next nil unless model
+              next nil unless context.can?(:read, model)
+              next attr_type.resolve(model, field_name)
+            end
           end
         end
       end
