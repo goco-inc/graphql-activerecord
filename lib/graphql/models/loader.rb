@@ -13,7 +13,7 @@ module GraphQL
 
         # If the request can be eager fulfilled, exclude it from the result
         load_requests.each do |request|
-          request.eager_fulfill { |result| fulfill_request(request, model) }
+          request.eager_fulfill { |result| fulfill_request(request, result) }
         end
 
         load_requests = load_requests.reject { |r| fulfilled?(r) }
@@ -34,8 +34,7 @@ module GraphQL
 
         conditions = []
         if id_requests.any?
-          first = id_requests[0].in_clause
-          id_values = id_requests.map { |r| ActiveRecord::Base.sanitize(r.in_clause) }.join(', ')
+          id_values = id_requests.map(&:in_clause).uniq.map { |id| ActiveRecord::Base.sanitize(id) }.join(', ')
           conditions.push("#{model_class.table_name}.id in (#{id_values})")
         end
 
@@ -44,7 +43,10 @@ module GraphQL
           conditions.push("#{model_class.table_name}.id in (#{union})")
         end
 
-        result = @model_class.where(conditions.join(" OR ")).select(["#{model_class.table_name}.*", *extra_columns].join(', '))
+        result = @model_class
+          .where(conditions.join(" OR "))
+          .select(["#{model_class.table_name}.*", *extra_columns].join(', '))
+          .to_a
 
         id_requests.each do |req|
           model = result.detect { |m| m.id == req.in_clause }

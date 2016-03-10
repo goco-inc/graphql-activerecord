@@ -6,24 +6,12 @@ module GraphQL
       def initialize(base_model, association_name, context)
         @base_model = base_model
         @association = base_model.association(association_name)
+        @context = context
       end
 
-      def reflection
-        association.reflection
-      end
-
-      def model_cache
-        return nil unless context
-        context.model_cache[target_class] ||= {}
-      end
-
-      def target_class
-        case when reflection.polymorphic?
-          base_model.send(reflection.foreign_type).constantize
-        else
-          reflection.klass
-        end
-      end
+      ####################################################################
+      # Public members that all load requests should implement
+      ####################################################################
 
       def eager_fulfill
         return unless context
@@ -39,12 +27,13 @@ module GraphQL
         elsif reflection.macro == :has_one
 
           model = model_cache.values.detect do |m|
-            m.send(reflection.foreign_key) == base_model.id && (!reflection.options.include?[:as] || m.send(reflection.foreign_type) == base_model.class.name)
+            m.send(reflection.foreign_key) == base_model.id && (!reflection.options.include?[:as] || m.send(reflection.type) == base_model.class.name)
           end
 
           yield model and return unless model.nil?
         end
       end
+
 
       def in_clause_type
         case reflection.macro
@@ -65,7 +54,7 @@ module GraphQL
           condition = { reflection.foreign_key => base_model.id }
 
           if reflection.options.include?(:as)
-            condition[reflection.foreign_type] = base_model.class.name
+            condition[reflection.type] = base_model.class.name
           end
 
           target_class.where(condition).select(:id).to_sql
@@ -99,6 +88,31 @@ module GraphQL
           model_cache[result.id] = result if model_cache
         end
       end
+
+
+      #################################################################
+      # Public members specific to an association load request
+      #################################################################
+
+      def target_class
+        case when reflection.polymorphic?
+          base_model.send(reflection.foreign_type).constantize
+        else
+          reflection.klass
+        end
+      end
+
+      private
+
+      def reflection
+        association.reflection
+      end
+
+      def model_cache
+        return nil unless context
+        context.model_cache[target_class] ||= {}
+      end
+
     end
   end
 end

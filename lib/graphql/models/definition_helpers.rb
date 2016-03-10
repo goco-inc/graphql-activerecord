@@ -9,6 +9,16 @@ module GraphQL
       def self.load_and_traverse(current_model, path, context)
         return Promise.resolve(current_model) if path.length == 0
 
+        association = current_model.association(path[0])
+
+        # If the model is already loaded, we can return it immediately
+        # Else if we know that the associated model is nil, we can return nil immediately
+        if association.loaded?
+          return Promise.resolve(association.target)
+        elsif association.reflection.macro == :belongs_to && current_model.send(association.reflection.foreign_key).nil?
+          return Promise.resolve(nil)
+        end
+
         request = AssociationLoadRequest.new(current_model, path[0], context)
         Loader.for(request.target_class).load(request).then do |next_model|
           next nil unless next_model
