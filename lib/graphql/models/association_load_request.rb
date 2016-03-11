@@ -13,51 +13,30 @@ module GraphQL
       # Public members that all load requests should implement
       ####################################################################
 
-      def eager_fulfill
-        return unless context
-
-        yield association.target and return if association.loaded?
-
-        if reflection.macro == :belongs_to
-          id = base_model.send(reflection.foreign_key)
-
-          yield nil and return if id.nil?
-          yield model_cache[id] and return if model_cache.include?(id)
-
-        elsif reflection.macro == :has_one
-
-          model = model_cache.values.detect do |m|
-            m.send(reflection.foreign_key) == base_model.id && (!reflection.options.include?[:as] || m.send(reflection.type) == base_model.class.name)
-          end
-
-          yield model and return unless model.nil?
-        end
-      end
-
-
-      def in_clause_type
+      def load_type
         case reflection.macro
         when :belongs_to
           :id
         else
-          :query
+          :relation
         end
       end
-
-      # The resulting query will be something like "where id in (...)". This method needs to return the contents
-      # of that 'in' clause.
-      def in_clause
+      
+      def load_target
         case reflection.macro
         when :belongs_to
           base_model.send(reflection.foreign_key)
+        when :has_many
+          base_model.send(association.reflection.name)
         else
+          # has_one, need to construct our own relation, because accessing the relation will load the model
           condition = { reflection.foreign_key => base_model.id }
 
           if reflection.options.include?(:as)
             condition[reflection.type] = base_model.class.name
           end
 
-          target_class.where(condition).select(:id).to_sql
+          target_class.where(condition)
         end
       end
 
@@ -80,15 +59,12 @@ module GraphQL
           association.target.concat(result)
           result.each do |m|
             association.set_inverse_instance(m)
-            model_cache[m.id] = m if model_cache
           end
         else
           association.target = result
           association.set_inverse_instance(result)
-          model_cache[result.id] = result if model_cache
         end
       end
-
 
       #################################################################
       # Public members specific to an association load request
@@ -106,11 +82,6 @@ module GraphQL
 
       def reflection
         association.reflection
-      end
-
-      def model_cache
-        return nil unless context
-        context.model_cache[target_class] ||= {}
       end
 
     end
