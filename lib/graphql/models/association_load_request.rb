@@ -21,9 +21,7 @@ module GraphQL
           :relation
         end
       end
-
-      # The resulting query will be something like "where id in (...)". This method needs to return the contents
-      # of that 'in' clause.
+      
       def load_target
         case reflection.macro
         when :belongs_to

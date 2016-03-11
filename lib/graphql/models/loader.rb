@@ -22,8 +22,7 @@ module GraphQL
         load_requests.select { |r| r.load_type == :relation }.each do |request|
           relation = request.load_target
           relations.push(relation)
-          relations_to_requests[relation] ||= []
-          relations_to_requests[relation].push(request)
+          relations_to_requests[relation.object_id] = request
         end
 
         # We need to build a query that will return all of the rows that match any of the relations.
@@ -54,7 +53,7 @@ module GraphQL
 
         # Build the query that will select any of the rows that match the selection clauses
         main_relation = model_class
-          .where("id in (#{selection_clauses.join(' UNION ')})")
+          .where("id in ((#{selection_clauses.join(") UNION (")}))")
           .select(%{ "#{model_class.table_name}".* })
 
         main_relation = slicing_columns.reduce(main_relation) { |relation, memo| relation.select(memo) }
@@ -70,7 +69,7 @@ module GraphQL
 
           matching_rows = result.select { |r| r[slice_col] == 1 }.sort_by { |r| r[sort_col] }
 
-          if relation == id_relation
+          if relation.object_id == id_relation.object_id
             pk = relation.klass.primary_key
 
             id_requests.each do |request|
@@ -79,9 +78,8 @@ module GraphQL
             end
           end
 
-          relations_to_requests[relation].each do |request|
-            fulfill_request(request, matching_rows)
-          end
+          request = relations_to_requests[relation.object_id]
+          fulfill_request(request, matching_rows) if request
         end
       end
 
