@@ -12,17 +12,23 @@ module GraphQL
 
         association = current_model.association(path[0])
 
-        if association.loaded? || attempt_cache_load(current_model, association, context)
-          cache_model(context, association.target)
-          return Promise.resolve(association.target)
+        while path.length > 0 && (association.loaded? || attempt_cache_load(current_model, association, context))
+          current_model = association.target
+          path = path[1..-1]
+          cache_model(context, current_model)
+
+          return Promise.resolve(current_model) if path.length == 0
+
+          association = current_model.association(path[0])
         end
 
         request = AssociationLoadRequest.new(current_model, path[0], context)
         Loader.for(request.target_class).load(request).then do |next_model|
-          next nil unless next_model
+          next next_model if next_model.blank?
+          cache_model(context, next_model)
 
           if path.length == 1
-            cache_model(context, next_model)
+            sanity = next_model.is_a?(Array) ? next_model[0] : next_model
             next next_model
           else
             DefinitionHelpers.load_and_traverse(next_model, path[1..-1], context)

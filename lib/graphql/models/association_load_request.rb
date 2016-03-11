@@ -21,7 +21,7 @@ module GraphQL
           :relation
         end
       end
-      
+
       def load_target
         case reflection.macro
         when :belongs_to
@@ -62,7 +62,7 @@ module GraphQL
           end
         else
           association.target = result
-          association.set_inverse_instance(result)
+          association.set_inverse_instance(result) if result
         end
       end
 
