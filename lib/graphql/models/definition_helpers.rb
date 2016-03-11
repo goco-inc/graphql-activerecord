@@ -8,7 +8,7 @@ module GraphQL
       # Returns a promise that will eventually resolve to the model that is at the end of the path
       def self.load_and_traverse(current_model, path, context)
         cache_model(context, current_model)
-        return Promise.resolve(current_model) if path.length == 0
+        return Promise.resolve(current_model) if path.length == 0 || current_model.nil?
 
         association = current_model.association(path[0])
 
@@ -17,7 +17,7 @@ module GraphQL
           path = path[1..-1]
           cache_model(context, current_model)
 
-          return Promise.resolve(current_model) if path.length == 0
+          return Promise.resolve(current_model) if path.length == 0 || current_model.nil?
 
           association = current_model.association(path[0])
         end
