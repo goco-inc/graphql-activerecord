@@ -12,7 +12,7 @@ class GraphQL::Query::Context
     ability.can?(action, subject, *extra_args)
   end
 
-  def model_cache
-    @model_cache ||= {}
+  def cached_models
+    @cached_models ||= Set.new
   end
 end

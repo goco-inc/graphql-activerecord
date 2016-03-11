@@ -8,55 +8,80 @@ module GraphQL
       end
 
       def perform(load_requests)
-        # Each load request should return a SQL query that returns a list of ID's for the models
-        # that the request is asking to have loaded.
+        # Group the requests to load by id into a single relation, and we'll fan it back out after
+        # we have the results
 
-        # If the request can be eager fulfilled, exclude it from the result
-        load_requests.each do |request|
-          request.eager_fulfill { |result| fulfill_request(request, result) }
+        relations = []
+        id_requests = load_requests.select { |r| r.load_type == :id }
+        id_relation = model_class.where(id: id_requests.map(&:load_target))
+
+        relations.push(id_relation) if id_requests.any?
+        relations_to_requests = {}
+
+        # Gather up all of the requests to load a relation, and map the relations back to their requests
+        load_requests.select { |r| r.load_type == :relation }.each do |request|
+          relation = request.load_target
+          relations.push(relation)
+          relations_to_requests[relation] ||= []
+          relations_to_requests[relation].push(request)
         end
 
-        load_requests = load_requests.reject { |r| fulfilled?(r) }
-        return if load_requests.empty?
+        # We need to build a query that will return all of the rows that match any of the relations.
+        # But in addition, we also need to know how that relation sorted them. So we pull any ordering
+        # information by adding RANK() columns to the query, and we determine whether that row belonged
+        # to the query by adding CASE columns.
 
-        grouped = load_requests.group_by(&:in_clause_type)
-
-        id_requests = grouped[:id] || []
-        query_requests = grouped[:query] || []
-
-        queries = query_requests.map { |r| model_class.where("#{model_class.table_name}.id in (#{r.in_clause})").select(:id).to_sql }
-
-        # We want to build a query that will return all of the models that match any of the queries,
-        # and we want the server to also tell us which ones matched that particular query
-        extra_columns = query_requests.each_with_index.map do |request, index|
-          "CASE WHEN #{model_class.table_name}.id IN (#{request.in_clause}) THEN true ELSE false END AS load_req_#{index}"
+        # Map each relation to a SQL query that selects only the ID column for the rows that match it
+        selection_clauses = relations.map do |relation|
+          relation.unscope(:select).select(model_class.primary_key).to_sql
         end
 
-        conditions = []
-        if id_requests.any?
-          id_values = id_requests.map(&:in_clause).uniq.map { |id| ActiveRecord::Base.sanitize(id) }.join(', ')
-          conditions.push("#{model_class.table_name}.id in (#{id_values})")
+        # Generate a CASE column that will tell us whether the row matches this particular relation
+        slicing_columns = relations.each_with_index.map do |relation, index|
+          %{ CASE WHEN "#{model_class.table_name}"."#{model_class.primary_key}" IN (#{selection_clauses[index]}) THEN 1 ELSE 0 END AS "in_relation_#{index}" }
         end
 
-        if queries.any?
-          union = queries.join(' UNION ')
-          conditions.push("#{model_class.table_name}.id in (#{union})")
+        # For relations that have sorting applied, generate a RANK() column that tells us how the rows are
+        # sorted within that relation
+        sorting_columns = relations.each_with_index.map do |relation, index|
+          arel = relation.arel
+          next nil unless arel.orders.any?
+
+          %{ RANK() OVER (ORDER BY #{arel.orders.map(&:to_sql).join(', ')}) AS "sort_relation_#{index}" }
         end
 
-        result = @model_class
-          .where(conditions.join(" OR "))
-          .select(["#{model_class.table_name}.*", *extra_columns].join(', '))
-          .to_a
+        sorting_columns.compact!
 
-        id_requests.each do |req|
-          model = result.detect { |m| m.id == req.in_clause }
-          fulfill_request(req, model)
-        end
+        # Build the query that will select any of the rows that match the selection clauses
+        main_relation = model_class
+          .where("id in (#{selection_clauses.join(' UNION ')})")
+          .select(%{ "#{model_class.table_name}".* })
 
-        query_requests.each_with_index do |req, idx|
-          loaded_column = "load_req_#{idx}"
-          models = result.select { |m| m[loaded_column] }
-          fulfill_request(req, models)
+        main_relation = slicing_columns.reduce(main_relation) { |relation, memo| relation.select(memo) }
+        main_relation = sorting_columns.reduce(main_relation) { |relation, memo| relation.select(memo) }
+
+        # Run the query
+        result = main_relation.to_a
+
+        # Now multiplex the results out to all of the relations that had asked for values
+        relations.each_with_index do |relation, index|
+          slice_col = "in_relation_#{index}"
+          sort_col = "sort_relation_#{index}"
+
+          matching_rows = result.select { |r| r[slice_col] == 1 }.sort_by { |r| r[sort_col] }
+
+          if relation == id_relation
+            pk = relation.klass.primary_key
+
+            id_requests.each do |request|
+              row = matching_rows.detect { |r| r[pk] == request.load_target }
+              fulfill(request, row)
+            end
+          end
+
+          relations_to_requests[relation].each do |request|
+            fulfill_request(request, matching_rows)
+          end
         end
       end
 
