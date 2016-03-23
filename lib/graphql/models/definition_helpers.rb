@@ -1,3 +1,5 @@
+require 'ostruct'
+
 module GraphQL
   module Models
     module DefinitionHelpers
@@ -105,15 +107,32 @@ module GraphQL
       def self.define_attribute_type_field(definer, model_type, path, attr_type, field_name, options)
         camel_name = options[:name] || field_name.to_s.camelize(:lower).to_sym
 
-        definer.noauth_field camel_name, attr_type.graph_type_proc do
+        DefinitionHelpers.register_field_metadata(definer.resolved_model_type, camel_name, {
+          macro: attr_type.name,
+          macro_type: :virtual,
+          type_proc: attr_type.graph_type_proc,
+          path: path,
+          options: options
+        })
+
+        definer.field camel_name, attr_type.graph_type_proc do
           resolve -> (base_model, args, context) do
             DefinitionHelpers.load_and_traverse(base_model, path, context).then do |model|
               next nil unless model
-              next nil unless context.can?(:read, model)
               next attr_type.resolve(model, field_name)
             end
           end
         end
+      end
+
+      # Stores metadata about GraphQL fields that are available on this model's GraphQL type.
+      # @param metadata Should be a hash that contains information about the field's definition, including :macro and :type
+      def self.register_field_metadata(model_type, field_name, metadata)
+        field_name = field_name.to_s
+
+        field_meta = model_type.instance_variable_get(:@_graphql_field_metadata)
+        field_meta = model_type.instance_variable_set(:@_graphql_field_metadata, {}) unless field_meta
+        field_meta[field_name] = OpenStruct.new(metadata).freeze
       end
     end
   end

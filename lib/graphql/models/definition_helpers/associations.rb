@@ -45,8 +45,6 @@ module GraphQL
         end
       end
 
-
-
       def self.define_has_one(definer, model_type, path, association, options)
         reflection = model_type.reflect_on_association(association)
 
@@ -54,8 +52,18 @@ module GraphQL
         fail ArgumentError.new("Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_one") unless [:has_one, :belongs_to].include?(reflection.macro)
 
         camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
+        type_lambda = resolve_has_one_type(reflection)
 
-        definer.field camel_name, resolve_has_one_type(reflection) do
+        DefinitionHelpers.register_field_metadata(definer.resolved_model_type, camel_name, {
+          macro: :has_one,
+          macro_type: :association,
+          type_proc: type_lambda,
+          path: path,
+          association: association,
+          options: options
+        })
+
+        definer.field camel_name, type_lambda do
           resolve -> (base_model, args, context) do
             DefinitionHelpers.load_and_traverse(base_model, [*path, association], context)
           end
@@ -71,10 +79,19 @@ module GraphQL
         type_lambda = -> { types["#{reflection.klass.name}Graph".constantize] }
         camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
 
+        DefinitionHelpers.register_field_metadata(definer.resolved_model_type, camel_name, {
+          macro: :has_many_array,
+          macro_type: :association,
+          type_proc: type_lambda,
+          path: path,
+          association: association,
+          options: options
+        })
+
         definer.field camel_name, type_lambda do
           resolve -> (base_model, args, context) do
             DefinitionHelpers.load_and_traverse(base_model, [*path, association], context).then do |result|
-              Array.wrap(result).select { |v| context.can?(:read, v) }
+              Array.wrap(result)
             end
           end
         end
@@ -88,6 +105,15 @@ module GraphQL
 
         type_lambda = -> { "#{reflection.klass.name}Graph".constantize.connection_type }
         camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
+
+        DefinitionHelpers.register_field_metadata(definer.resolved_model_type, camel_name, {
+          macro: :has_many_connection,
+          macro_type: :association,
+          type_proc: type_lambda,
+          path: path,
+          association: association,
+          options: options
+        })
 
         definer.connection camel_name, type_lambda do
           resolve -> (base_model, args, context) do

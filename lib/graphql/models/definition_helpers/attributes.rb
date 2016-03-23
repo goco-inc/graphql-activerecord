@@ -53,14 +53,23 @@ module GraphQL
 
         field_name = options[:name] || column.camel_name
 
-        definer.noauth_field field_name, column.graphql_type do
+        DefinitionHelpers.register_field_metadata(definer.resolved_model_type, field_name, {
+          macro: :attr,
+          macro_type: :attribute,
+          type_proc: -> { column.graphql_type },
+          path: path,
+          attribute: attribute,
+          options: options
+        })
+
+        definer.field field_name, column.graphql_type do
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
           resolve -> (base_model, args, context) do
             DefinitionHelpers.load_and_traverse(base_model, path, context).then do |model|
               next nil unless model
-              next nil unless context.can?(:read, model)
+              # next nil unless context.can?(:read, model)
 
               if column.is_range
                 DefinitionHelpers.range_to_graphql(model.public_send(attribute))
