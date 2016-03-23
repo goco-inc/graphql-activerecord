@@ -9,14 +9,15 @@ module GraphQL
       end
 
       def standard_fields
-        noauth_field :id, field: GraphQL::Relay::GlobalIdField.new(name)
+        field :id, field: GraphQL::Relay::GlobalIdField.new(name)
+
         interfaces [NodeIdentification.interface]
 
-        noauth_field :rid, !types.String do
+        field :rid, !types.String do
           resolve proc { |model| model.id }
         end
 
-        noauth_field :rtype, !types.String do
+        field :rtype, !types.String do
           resolve proc { |model| model.class.name }
         end
 
@@ -30,20 +31,6 @@ module GraphQL
         end
 
         @interfaces
-      end
-
-      alias_method :noauth_field, :field
-
-      def field(*outer_args)
-        field = super
-
-        resolver = field.resolve_proc
-        field.resolve = -> (model, args, context) do
-          return nil unless context.can?(:read, model)
-          resolver.call(model, args, context)
-        end
-
-        field
       end
 
       def proxy_to(association, &block)

@@ -26,3 +26,23 @@ require 'graphql/models/definition_helpers/associations'
 require 'graphql/models/definition_helpers/attributes'
 require 'graphql/models/model_type_config'
 require 'graphql/models/model_type'
+
+module GraphQL
+  module Models
+    # Returns a promise that will traverse the associations and resolve to the model at the end of the path.
+    # You can use this to access associated models inside custom field resolvers, without losing optimization
+    # benefits.
+    def self.load_association(starting_model, path, context)
+      GraphQL::Models::DefinitionHelpers.load_and_traverse(starting_model, path, context)
+    end
+
+    def self.field_info(model_type, field_name)
+      field_name = field_name.to_s
+
+      meta = model_type.instance_variable_get(:@_graphql_field_metadata)
+      return nil unless meta
+
+      meta[field_name]
+    end
+  end
+end

@@ -17,6 +17,6 @@ Gem::Specification.new do |s|
   s.files = Dir["{lib}/**/*", "MIT_LICENSE", "readme.md"]
   s.test_files = Dir["spec/**/*"]
 
-  s.add_runtime_dependency "graphql", "~> 0.10"
-  s.add_runtime_dependency "graphql-relay", "~> 0.7"
+  s.add_runtime_dependency "graphql", "~> 0.11.0"
+  s.add_runtime_dependency "graphql-relay", "~> 0.7.0"
 end
