@@ -3,7 +3,6 @@ require 'graphql'
 require 'graphql/models/monkey_patches/base_type'
 require 'graphql/models/monkey_patches/graphql_relay_global_node_identification'
 require 'graphql/models/monkey_patches/graphql_query_context'
-require 'graphql/models/monkey_patches/graphql_relay_connection_field'
 require 'graphql/models/active_record_extension'
 
 # Helpers
@@ -24,8 +23,7 @@ require 'graphql/models/scalar_types'
 require 'graphql/models/definition_helpers'
 require 'graphql/models/definition_helpers/associations'
 require 'graphql/models/definition_helpers/attributes'
-require 'graphql/models/model_type_config'
-require 'graphql/models/model_type'
+require 'graphql/models/object_type'
 
 module GraphQL
   module Models

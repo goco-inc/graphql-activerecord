@@ -4,7 +4,7 @@ module GraphQL
   module Models
     module DefinitionHelpers
       def self.types
-        GraphQL::DefinitionHelpers::TypeDefiner.instance
+        GraphQL::Define::TypeDefiner.instance
       end
 
       # Returns a promise that will eventually resolve to the model that is at the end of the path
@@ -104,10 +104,12 @@ module GraphQL
       end
 
       # Defines a special attribute field (eg, 'attachment')
-      def self.define_attribute_type_field(definer, model_type, path, attr_type, field_name, options)
+      def self.define_attribute_type_field(graph_type, path, attr_type, field_name, options)
+        graph_model_type = graph_type.instance_variable_get(:@model_type)
+
         camel_name = options[:name] || field_name.to_s.camelize(:lower).to_sym
 
-        DefinitionHelpers.register_field_metadata(definer.resolved_model_type, camel_name, {
+        DefinitionHelpers.register_field_metadata(graph_model_type, camel_name, {
           macro: attr_type.name,
           macro_type: :virtual,
           type_proc: attr_type.graph_type_proc,
@@ -115,7 +117,12 @@ module GraphQL
           options: options
         })
 
-        definer.field camel_name, attr_type.graph_type_proc do
+        graph_type.fields[camel_name.to_s] = GraphQL::Field.define do
+          name camel_name.to_s
+          type attr_type.graph_type_proc
+          description options[:description] if options.include?(:description)
+          deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
+
           resolve -> (base_model, args, context) do
             DefinitionHelpers.load_and_traverse(base_model, path, context).then do |model|
               next nil unless model
