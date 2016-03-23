@@ -9,13 +9,14 @@ module GraphQL
         ATTRIBUTE_TYPES[attr_type.name] = attr_type
 
         # Create a method for defining this type of object inside of a schema
-        ModelTypeConfig.send(:define_method, "#{attr_type.name}") do |field_name, **options|
-          ensure_has_model_type(attr_type.name)
-          DefinitionHelpers.define_attribute_type_field(self, resolved_model_type, [], attr_type, field_name, options)
-        end
+        GraphQL::ObjectType.accepts_definitions({
+          :"#{attr_type.name}" => lambda do |graph_type, field_name, **options|
+            DefinitionHelpers.define_attribute_type_field(graph_type, [], attr_type, field_name, options)
+          end
+        })
 
         ProxyBlock.send(:define_method, "#{attr_type.name}") do |field_name, **options|
-          DefinitionHelpers.define_attribute_type_field(@definer, @model_type, @path, attr_type, field_name, options)
+          DefinitionHelpers.define_attribute_type_field(@graph_type, @path, attr_type, field_name, options)
         end
 
         # Create a method for generating a global ID for this type

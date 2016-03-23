@@ -1,7 +1,7 @@
 module GraphQL
   module Models
     module DefinitionHelpers
-      def self.define_proxy(definer, model_type, path, association, &block)
+      def self.define_proxy(graph_type, model_type, path, association, &block)
         reflection = model_type.reflect_on_association(association)
         raise ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
         raise ArgumentError.new("Cannot proxy to polymorphic association #{association} on model #{model_type.name}") if reflection.polymorphic?
@@ -9,7 +9,7 @@ module GraphQL
 
         return unless block_given?
 
-        proxy = ProxyBlock.new(definer, reflection.klass, [*path, association])
+        proxy = ProxyBlock.new(graph_type, reflection.klass, [*path, association])
         proxy.instance_exec(&block)
       end
 
@@ -45,7 +45,11 @@ module GraphQL
         end
       end
 
-      def self.define_has_one(definer, model_type, path, association, options)
+      # Adds a field to the graph type which is resolved by accessing a has_one association on the model. Traverses
+      # across has_one associations specified in the path. The resolver returns a promise.
+      def self.define_has_one(graph_type, model_type, path, association, options)
+        graph_model_type = graph_type.instance_variable_get(:@model_type)
+
         reflection = model_type.reflect_on_association(association)
 
         fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
@@ -54,7 +58,7 @@ module GraphQL
         camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
         type_lambda = resolve_has_one_type(reflection)
 
-        DefinitionHelpers.register_field_metadata(definer.resolved_model_type, camel_name, {
+        DefinitionHelpers.register_field_metadata(graph_model_type, camel_name, {
           macro: :has_one,
           macro_type: :association,
           type_proc: type_lambda,
@@ -63,14 +67,21 @@ module GraphQL
           options: options
         })
 
-        definer.field camel_name, type_lambda do
+        graph_type.fields[camel_name.to_s] = GraphQL::Field.define do
+          name camel_name.to_s
+          type type_lambda
+          description options[:description] if options.include?(:description)
+          deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
+
           resolve -> (base_model, args, context) do
             DefinitionHelpers.load_and_traverse(base_model, [*path, association], context)
           end
         end
       end
 
-      def self.define_has_many_array(definer, model_type, path, association, options)
+      def self.define_has_many_array(graph_type, model_type, path, association, options)
+        graph_model_type = graph_type.instance_variable_get(:@model_type)
+
         reflection = model_type.reflect_on_association(association)
 
         fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
@@ -79,7 +90,7 @@ module GraphQL
         type_lambda = -> { types["#{reflection.klass.name}Graph".constantize] }
         camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
 
-        DefinitionHelpers.register_field_metadata(definer.resolved_model_type, camel_name, {
+        DefinitionHelpers.register_field_metadata(graph_model_type, camel_name, {
           macro: :has_many_array,
           macro_type: :association,
           type_proc: type_lambda,
@@ -88,7 +99,12 @@ module GraphQL
           options: options
         })
 
-        definer.field camel_name, type_lambda do
+        graph_type.fields[camel_name.to_s] = GraphQL::Field.define do
+          name camel_name.to_s
+          type type_lambda
+          description options[:description] if options.include?(:description)
+          deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
+
           resolve -> (base_model, args, context) do
             DefinitionHelpers.load_and_traverse(base_model, [*path, association], context).then do |result|
               Array.wrap(result)
@@ -97,7 +113,9 @@ module GraphQL
         end
       end
 
-      def self.define_has_many_connection(definer, model_type, path, association, options)
+      def self.define_has_many_connection(graph_type, model_type, path, association, options)
+        graph_model_type = graph_type.instance_variable_get(:@model_type)
+
         reflection = model_type.reflect_on_association(association)
 
         fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
@@ -106,7 +124,7 @@ module GraphQL
         type_lambda = -> { "#{reflection.klass.name}Graph".constantize.connection_type }
         camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
 
-        DefinitionHelpers.register_field_metadata(definer.resolved_model_type, camel_name, {
+        DefinitionHelpers.register_field_metadata(graph_model_type, camel_name, {
           macro: :has_many_connection,
           macro_type: :association,
           type_proc: type_lambda,
@@ -115,7 +133,7 @@ module GraphQL
           options: options
         })
 
-        definer.connection camel_name, type_lambda do
+        GraphQL::Relay::Define::AssignConnection.call(graph_type, camel_name, type_lambda) do
           resolve -> (base_model, args, context) do
             model = DefinitionHelpers.traverse_path(base_model, path, context)
             return nil unless model
