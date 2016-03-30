@@ -87,7 +87,7 @@ module GraphQL
         fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
         fail ArgumentError.new("Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_many_array") unless [:has_many].include?(reflection.macro)
 
-        type_lambda = options[:type] || -> { types["#{reflection.klass.name}Graph".constantize] }
+        type_lambda = options[:type] || -> { types[!"#{reflection.klass.name}Graph".constantize] }
         camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
 
         DefinitionHelpers.register_field_metadata(graph_model_type, camel_name, {
