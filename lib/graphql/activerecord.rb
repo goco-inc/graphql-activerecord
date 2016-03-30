@@ -31,6 +31,7 @@ module GraphQL
     # You can use this to access associated models inside custom field resolvers, without losing optimization
     # benefits.
     def self.load_association(starting_model, path, context)
+      path = Array.wrap(path)
       GraphQL::Models::DefinitionHelpers.load_and_traverse(starting_model, path, context)
     end
 

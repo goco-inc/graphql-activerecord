@@ -2,6 +2,11 @@ module GraphQL
   module Models
     module DefinitionHelpers
       def self.type_to_graphql_type(type)
+        registered_type = ScalarTypes.registered_type(type)
+        if registered_type
+          return registered_type.is_a?(Proc) ? registered_type.call : registered_type
+        end
+
         case type
         when :boolean
           types.Boolean
@@ -9,11 +14,14 @@ module GraphQL
           types.Int
         when :float
           types.Float
-        when :daterange, :tsrange
-          types[!types.String]
+        when :daterange
+          inner_type = type_to_graphql_type(:date)
+          types[!inner_type]
+        when :tsrange
+          inner_type = type_to_graphql_type(:datetime)
+          types[!inner_type]
         else
-          resolved = ScalarTypes.registered_type(type) || types.String
-          resolved.is_a?(Proc) ? resolved.call : resolved
+          types.String
         end
       end
 
