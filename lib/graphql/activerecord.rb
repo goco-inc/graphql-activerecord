@@ -14,8 +14,8 @@ require 'graphql/models/loader'
 require 'graphql/models/promise_relation_connection'
 require 'graphql/models/relation_load_request'
 require 'graphql/models/identification'
-require 'graphql/models/identification/attribute_type_definition'
-require 'graphql/models/identification/attribute_types'
+require 'graphql/models/identification/computed_type_definition'
+require 'graphql/models/identification/computed_types'
 require 'graphql/models/identification/node_identification'
 require 'graphql/models/identification/model_types'
 require 'graphql/models/proxy_block'
@@ -42,6 +42,10 @@ module GraphQL
       return nil unless meta
 
       meta[field_name]
+    end
+
+    def self.register_computed_type(&block)
+      GraphQL::Models::Identification.register_computed_type(&block)
     end
   end
 end
