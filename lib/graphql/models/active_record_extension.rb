@@ -19,7 +19,7 @@ module GraphQL
           options[:name] ||= "#{self.name}#{attribute.to_s.classify}"
           options[:description] ||= "#{attribute.to_s.titleize} field on #{self.name.titleize}"
 
-          unless options[:values]
+          if !options[:values] && !options[:type]
             if defined_enums.include?(attribute.to_s)
               options[:values] = defined_enums[attribute.to_s].keys.map { |ev| [options[:upcase] ? ev.upcase : ev, ev.titleize] }.to_h
             else
@@ -27,13 +27,18 @@ module GraphQL
             end
           end
 
-          enum_type = graphql_enum_types[attribute] ||= GraphQL::EnumType.define do
-            name options[:name]
-            description options[:description]
+          enum_type = graphql_enum_types[attribute]
+          unless enum_type
+            enum_type = options[:type] || GraphQL::EnumType.define do
+              name options[:name]
+              description options[:description]
 
-            options[:values].each do |value_name, desc|
-              value(value_name, desc)
+              options[:values].each do |value_name, desc|
+                value(value_name, desc)
+              end
             end
+
+            graphql_enum_types[attribute] = enum_type
           end
 
           graphql_resolve(attribute) { send(attribute).try(:upcase) } if options[:upcase]
