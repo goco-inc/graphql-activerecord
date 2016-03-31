@@ -103,56 +103,15 @@ module GraphQL
         return validators.map { |v| v.options[:in] }.reduce(:&)
       end
 
-      # Defines a special computed field (eg, 'attachment')
-      def self.define_computed_type_field(graph_type, path, computed_type, field_args, options)
-        graph_model_type = graph_type.instance_variable_get(:@model_type)
-
-        camel_name = options[:name] || field_args[0].to_s.camelize(:lower).to_sym
-
-        # Verify that the arguments provided are all valid identifiers
-        invalid = field_args.select do |arg|
-          arg_string = arg.to_s
-          unless GraphQL::Models::Identification::VALID_IDENTIFIER_EXP === arg_string
-            fail ArgumentError.new("Computed fields can only take arguments that are valid identifiers ([a-z][a-z0-9_]+) when casted to string. The argument #{arg.inspect} is not valid for #{computed_type.name} on #{graph_type.name}.")
-          end
-        end
-
-        field_type = computed_type.graph_type_proc.call(*field_args)
-        unless field_type.is_a?(GraphQL::BaseType)
-          fail StandardError.new("The graph_type proc for computed type #{computed_type.name} should return a GraphQL::BaseType, but it actually returned #{field_type.class.name}. Check `graph_type` for #{computed_type.name} at #{computed_type.location}.")
-        end
-
-        DefinitionHelpers.register_field_metadata(graph_model_type, camel_name, {
-          macro: computed_type.name,
-          macro_type: :virtual,
-          type_proc: -> { field_type },
-          path: path,
-          options: options
-        })
-
-        graph_type.fields[camel_name.to_s] = GraphQL::Field.define do
-          name camel_name.to_s
-          type field_type
-          description options[:description] if options.include?(:description)
-          deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
-
-          resolve -> (base_model, args, context) do
-            DefinitionHelpers.load_and_traverse(base_model, path, context).then do |model|
-              next nil unless model
-              next computed_type.resolve(model, *field_args)
-            end
-          end
-        end
-      end
-
       # Stores metadata about GraphQL fields that are available on this model's GraphQL type.
       # @param metadata Should be a hash that contains information about the field's definition, including :macro and :type
-      def self.register_field_metadata(model_type, field_name, metadata)
+      def self.register_field_metadata(model_type, graph_type, field_name, metadata)
         field_name = field_name.to_s
 
         field_meta = model_type.instance_variable_get(:@_graphql_field_metadata)
         field_meta = model_type.instance_variable_set(:@_graphql_field_metadata, {}) unless field_meta
-        field_meta[field_name] = OpenStruct.new(metadata).freeze
+        field_meta[graph_type] ||= {}
+        field_meta[graph_type][field_name] = OpenStruct.new(metadata).freeze
       end
     end
   end

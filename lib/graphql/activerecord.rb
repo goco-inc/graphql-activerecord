@@ -23,6 +23,7 @@ require 'graphql/models/scalar_types'
 require 'graphql/models/definition_helpers'
 require 'graphql/models/definition_helpers/associations'
 require 'graphql/models/definition_helpers/attributes'
+require 'graphql/models/definition_helpers/computed_types'
 require 'graphql/models/object_type'
 
 module GraphQL
@@ -35,13 +36,16 @@ module GraphQL
       GraphQL::Models::DefinitionHelpers.load_and_traverse(starting_model, path, context)
     end
 
-    def self.field_info(model_type, field_name)
+    def self.field_info(model_type, graph_type, field_name)
       field_name = field_name.to_s
 
       meta = model_type.instance_variable_get(:@_graphql_field_metadata)
       return nil unless meta
 
-      meta[field_name]
+      type_meta = meta[graph_type]
+      return nil unless type_meta
+
+      type_meta[field_name]
     end
 
     def self.register_computed_type(&block)

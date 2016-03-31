@@ -68,7 +68,7 @@ module GraphQL
         column = get_column(model_type, attribute)
         field_name = options[:name] || column.camel_name
 
-        DefinitionHelpers.register_field_metadata(graph_model_type, field_name, {
+        DefinitionHelpers.register_field_metadata(graph_model_type, graph_type, field_name, {
           macro: :attr,
           macro_type: :attribute,
           type_proc: -> { column.graphql_type },

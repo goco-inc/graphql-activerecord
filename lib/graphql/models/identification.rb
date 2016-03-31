@@ -15,7 +15,8 @@ module GraphQL
               fail ArgumentError.new("The computed type #{computed_type.name} requires #{computed_type.arity} arguments, you provided #{field_args.length}.")
             end
 
-            DefinitionHelpers.define_computed_type_field(graph_type, [], computed_type, field_args, options)
+            model_type = graph_type.instance_variable_get(:@model_type)
+            DefinitionHelpers.define_computed_type_field(graph_type, model_type, [], computed_type, field_args, options)
           end
         })
 
@@ -24,7 +25,7 @@ module GraphQL
             fail ArgumentError.new("The computed type #{computed_type.name} requires #{computed_type.arity} arguments, you provided #{field_args.length}.")
           end
 
-          DefinitionHelpers.define_computed_type_field(@graph_type, @path, computed_type, field_args, options)
+          DefinitionHelpers.define_computed_type_field(@graph_type, @model_type, @path, computed_type, field_args, options)
         end
 
         # Create a method for generating a global ID for this type

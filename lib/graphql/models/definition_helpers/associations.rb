@@ -58,7 +58,7 @@ module GraphQL
         camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
         type_lambda = resolve_has_one_type(reflection)
 
-        DefinitionHelpers.register_field_metadata(graph_model_type, camel_name, {
+        DefinitionHelpers.register_field_metadata(graph_model_type, graph_type, camel_name, {
           macro: :has_one,
           macro_type: :association,
           type_proc: type_lambda,
@@ -90,7 +90,7 @@ module GraphQL
         type_lambda = options[:type] || -> { types[!"#{reflection.klass.name}Graph".constantize] }
         camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
 
-        DefinitionHelpers.register_field_metadata(graph_model_type, camel_name, {
+        DefinitionHelpers.register_field_metadata(graph_model_type, graph_type, camel_name, {
           macro: :has_many_array,
           macro_type: :association,
           type_proc: type_lambda,
@@ -124,7 +124,7 @@ module GraphQL
         type_lambda = -> { "#{reflection.klass.name}Graph".constantize.connection_type }
         camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
 
-        DefinitionHelpers.register_field_metadata(graph_model_type, camel_name, {
+        DefinitionHelpers.register_field_metadata(graph_model_type, graph_type, camel_name, {
           macro: :has_many_connection,
           macro_type: :association,
           type_proc: type_lambda,
