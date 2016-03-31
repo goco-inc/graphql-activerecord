@@ -10,6 +10,9 @@ module GraphQL
           return Identification.resolve_model_type(type_name, id, context) if Identification.is_model_type(type_name)
           return Identification.resolve_computed_type(type_name, id, context) if Identification.is_computed_type(type_name)
 
+          # If we have a fallback method for identifying unknown gid's, invoke it
+          return GraphQL::Models.object_from_id.call(type_name, id, context) if GraphQL::Models.object_from_id
+
           return nil
         end
 
@@ -22,6 +25,9 @@ module GraphQL
             return graph_type if graph_type
           end
 
+          # If we have a fallback method for getting unknown types, invoke it
+          return GraphQL::Models.type_from_object.call(obj) if GraphQL::Models.type_from_object
+          
           return nil
         end
       end

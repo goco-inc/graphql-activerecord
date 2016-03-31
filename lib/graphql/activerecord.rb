@@ -56,5 +56,21 @@ module GraphQL
     def self.register_computed_type(&block)
       GraphQL::Models::Identification.register_computed_type(&block)
     end
+
+    def self.object_from_id
+      @object_from_id
+    end
+
+    def self.object_from_id=(value)
+      @object_from_id = value
+    end
+
+    def self.type_from_object
+      @type_from_object
+    end
+
+    def self.type_from_object=(value)
+      @type_from_object = value
+    end
   end
 end
