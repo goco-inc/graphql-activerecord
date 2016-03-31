@@ -83,7 +83,8 @@ module GraphQL
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (base_model, args, context) do
+          resolve -> (object, args, context) do
+            base_model = DefinitionHelpers.object_to_model(graph_type, object)
             DefinitionHelpers.load_and_traverse(base_model, path, context).then do |model|
               next nil unless model
 

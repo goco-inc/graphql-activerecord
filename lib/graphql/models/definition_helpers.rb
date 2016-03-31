@@ -7,6 +7,22 @@ module GraphQL
         GraphQL::Define::TypeDefiner.instance
       end
 
+      # Given a GraphQL type, and the object that was provided to it, this method will extract the ActiveRecord model
+      def self.object_to_model(graph_type, object)
+        extract_proc = graph_type.instance_variable_get(:@object_to_model)
+        if extract_proc
+          model = extract_proc.call(object)
+        else
+          model = object
+        end
+
+        unless model.nil? || model.is_a?(ActiveRecord::Base)
+          fail StandardError.new("The object provided to GraphQL type #{graph_type.name} should be an instance of ActiveRecord::Base, but got #{model.class.name} instead: #{model.inspect}")
+        end
+
+        model
+      end
+
       # Returns a promise that will eventually resolve to the model that is at the end of the path
       def self.load_and_traverse(current_model, path, context)
         cache_model(context, current_model)

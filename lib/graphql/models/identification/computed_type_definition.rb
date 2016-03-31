@@ -46,11 +46,6 @@ module GraphQL
           computed_type
         end
 
-        def graph_type
-          # graph_type_proc could be either a proc that returns a GraphQL type, or the type itself
-          graph_type.is_a?(Proc) ? graph_type.call : graph_type
-        end
-
         def detect(object)
           detect_proc.call(object)
         end
@@ -61,6 +56,24 @@ module GraphQL
 
         def resolve(model, *identifiers)
           resolve_proc.call(model, *identifiers)
+        end
+
+        def graph_type(model_type, field_args)
+          # Look at the parameters that the proc expects. We'll pass in the field args as the mandatory, but if it
+          # also takes keyword arguments, we'll pass those in as well.
+          available_keywords = { model_type: model_type }
+
+          arguments = graph_type_proc.parameters
+          explicit_keys = arguments.select { |arg_def| arg_def[0] == :key || arg_def[0] == :keyreq }.map { |arg_def| arg_def[1] }
+          takes_optional_keys = arguments.any? { |arg_def| arg_def[0] == :keyrest || arg_def[0] == :rest }
+
+          if takes_optional_keys
+            graph_type_proc.call(*field_args, **available_keywords)
+          elsif explicit_keys.any?
+            graph_type_proc.call(*field_args, **available_keywords.slice(*explicit_keys))
+          else
+            graph_type_proc.call(*field_args)
+          end
         end
       end
     end

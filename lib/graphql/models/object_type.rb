@@ -2,6 +2,10 @@ module GraphQL
   module Models
     module ObjectType
       class << self
+        def object_to_model(graph_type, proc)
+          graph_type.instance_variable_set(:@object_to_model, proc)
+        end
+
         def model_type(graph_type, model_type)
           model_type = model_type.to_s.classify.constantize unless model_type.is_a?(Class)
 
@@ -16,13 +20,17 @@ module GraphQL
           graph_type.fields['rid'] = GraphQL::Field.define do
             name 'rid'
             type !types.String
-            resolve proc { |model| model.id }
+            resolve -> (object, args, context) do
+              DefinitionHelpers.object_to_model(graph_type, object).id
+            end
           end
 
           graph_type.fields['rtype'] = GraphQL::Field.define do
             name 'rtype'
             type !types.String
-            resolve proc { |model| model.class.name }
+            resolve -> (object, args, context) do
+              DefinitionHelpers.object_to_model(graph_type, object).class.name
+            end
           end
 
           DefinitionHelpers.define_attribute(graph_type, model_type, [], :created_at, {})
