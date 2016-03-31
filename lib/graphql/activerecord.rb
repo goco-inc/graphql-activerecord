@@ -36,6 +36,11 @@ module GraphQL
       GraphQL::Models::DefinitionHelpers.load_and_traverse(starting_model, path, context)
     end
 
+    def self.load_relation(relation)
+      request = RelationLoadRequest.new(relation)
+      request.load
+    end
+
     def self.field_info(model_type, graph_type, field_name)
       field_name = field_name.to_s
 

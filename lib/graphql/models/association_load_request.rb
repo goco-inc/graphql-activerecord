@@ -66,6 +66,10 @@ module GraphQL
         end
       end
 
+      def load
+        loader.load(self)
+      end
+
       #################################################################
       # Public members specific to an association load request
       #################################################################
@@ -79,6 +83,10 @@ module GraphQL
       end
 
       private
+
+      def loader
+        @loader ||= Loader.for(target_class)
+      end
 
       def reflection
         association.reflection

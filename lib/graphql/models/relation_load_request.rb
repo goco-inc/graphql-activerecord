@@ -29,12 +29,22 @@ module GraphQL
       def fulfilled(result)
       end
 
+      def load
+        loader.load(self)
+      end
+
       #################################################################
       # Public members specific to a relation load request
       #################################################################
 
       def target_class
         relation.klass
+      end
+
+      private
+      
+      def loader
+        @loader ||= Loader.for(target_class)
       end
 
     end

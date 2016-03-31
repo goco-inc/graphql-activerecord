@@ -25,7 +25,7 @@ module GraphQL
         end
 
         request = AssociationLoadRequest.new(current_model, path[0], context)
-        Loader.for(request.target_class).load(request).then do |next_model|
+        request.load.then do |next_model|
           next next_model if next_model.blank?
           cache_model(context, next_model)
 
