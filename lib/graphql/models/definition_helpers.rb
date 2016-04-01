@@ -7,22 +7,6 @@ module GraphQL
         GraphQL::Define::TypeDefiner.instance
       end
 
-      # Given a GraphQL type, and the object that was provided to it, this method will extract the ActiveRecord model
-      def self.object_to_model(graph_type, object)
-        extract_proc = graph_type.instance_variable_get(:@object_to_model)
-        if extract_proc
-          model = extract_proc.call(object)
-        else
-          model = object
-        end
-
-        unless model.nil? || model.is_a?(ActiveRecord::Base)
-          fail StandardError.new("The object provided to GraphQL type #{graph_type.name} should be an instance of ActiveRecord::Base, but got #{model.class.name} instead: #{model.inspect}")
-        end
-
-        model
-      end
-
       # Returns a promise that will eventually resolve to the model that is at the end of the path
       def self.load_and_traverse(current_model, path, context)
         cache_model(context, current_model)
@@ -121,13 +105,12 @@ module GraphQL
 
       # Stores metadata about GraphQL fields that are available on this model's GraphQL type.
       # @param metadata Should be a hash that contains information about the field's definition, including :macro and :type
-      def self.register_field_metadata(model_type, graph_type, field_name, metadata)
+      def self.register_field_metadata(graph_type, field_name, metadata)
         field_name = field_name.to_s
 
-        field_meta = model_type.instance_variable_get(:@_graphql_field_metadata)
-        field_meta = model_type.instance_variable_set(:@_graphql_field_metadata, {}) unless field_meta
-        field_meta[graph_type] ||= {}
-        field_meta[graph_type][field_name] = OpenStruct.new(metadata).freeze
+        field_meta = graph_type.instance_variable_get(:@field_metadata)
+        field_meta = graph_type.instance_variable_set(:@field_metadata, {}) unless field_meta        
+        field_meta[field_name] = OpenStruct.new(metadata).freeze
       end
     end
   end
