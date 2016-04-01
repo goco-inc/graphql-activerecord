@@ -45,19 +45,6 @@ module GraphQL
           object_to_base_model: @object_to_model
         })
 
-        # Wrap the underlying field's resolve, so that it is injected with the model at the current path
-        resolver = defined_field.resolve_proc
-        path = @path
-
-        object_to_model = @object_to_model
-        defined_field.resolve = -> (object, args, context) do
-          base_model = object_to_model.call(object)
-
-          GraphQL::Models.load_association(base_model, path, context).then do |model|
-            resolver.call(model, args, context)
-          end
-        end
-
         defined_field
       end
     end

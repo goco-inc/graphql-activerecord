@@ -2,6 +2,7 @@ require 'graphql'
 
 require 'graphql/models/monkey_patches/graphql_query_context'
 require 'graphql/models/active_record_extension'
+require 'graphql/models/middleware'
 
 # Helpers
 require 'graphql/models/definer'
@@ -43,7 +44,7 @@ module GraphQL
 
       meta = graph_type.instance_variable_get(:@field_metadata)
       return nil unless meta
-      
+
       meta[field_name]
     end
 

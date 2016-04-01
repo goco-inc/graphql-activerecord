@@ -109,7 +109,7 @@ module GraphQL
         field_name = field_name.to_s
 
         field_meta = graph_type.instance_variable_get(:@field_metadata)
-        field_meta = graph_type.instance_variable_set(:@field_metadata, {}) unless field_meta        
+        field_meta = graph_type.instance_variable_set(:@field_metadata, {}) unless field_meta
         field_meta[field_name] = OpenStruct.new(metadata).freeze
       end
     end

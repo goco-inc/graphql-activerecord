@@ -82,20 +82,17 @@ module GraphQL
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (object, args, context) do
-            base_model = object_to_model.call(object)
-            DefinitionHelpers.load_and_traverse(base_model, path, context).then do |model|
-              next nil unless model
-
-              if column.is_range
-                DefinitionHelpers.range_to_graphql(model.public_send(attribute))
+          resolve -> (model, args, context) do
+            return nil unless model
+            
+            if column.is_range
+              DefinitionHelpers.range_to_graphql(model.public_send(attribute))
+            else
+              if model_type.graphql_resolvers.include?(attribute)
+                resolve_proc = model_type.graphql_resolvers[attribute]
+                model.instance_exec(&resolve_proc)
               else
-                if model_type.graphql_resolvers.include?(attribute)
-                  resolve_proc = model_type.graphql_resolvers[attribute]
-                  model.instance_exec(&resolve_proc)
-                else
-                  model.public_send(attribute)
-                end
+                model.public_send(attribute)
               end
             end
           end

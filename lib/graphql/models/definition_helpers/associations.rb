@@ -72,9 +72,9 @@ module GraphQL
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (object, args, context) do
-            base_model = object_to_model.call(object)
-            DefinitionHelpers.load_and_traverse(base_model, [*path, association], context)
+          resolve -> (model, args, context) do
+            return nil unless model
+            DefinitionHelpers.load_and_traverse(model, [association], context)
           end
         end
       end
@@ -104,9 +104,9 @@ module GraphQL
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (object, args, context) do
-            base_model = object_to_model.call(object)
-            DefinitionHelpers.load_and_traverse(base_model, [*path, association], context).then do |result|
+          resolve -> (model, args, context) do
+            return nil unless model
+            DefinitionHelpers.load_and_traverse(model, [association], context).then do |result|
               Array.wrap(result)
             end
           end
@@ -133,9 +133,7 @@ module GraphQL
         })
 
         GraphQL::Relay::Define::AssignConnection.call(graph_type, camel_name, type_lambda) do
-          resolve -> (object, args, context) do
-            base_model = object_to_model.call(object)
-            model = DefinitionHelpers.traverse_path(base_model, path, context)
+          resolve -> (model, args, context) do
             return nil unless model
             return GraphSupport.secure(model.public_send(association), context)
           end
