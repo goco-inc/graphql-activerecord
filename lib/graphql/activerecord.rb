@@ -49,9 +49,5 @@ module GraphQL
 
       meta[field_name]
     end
-
-    def self.register_computed_type(&block)
-      GraphQL::Models::Identification.register_computed_type(&block)
-    end
   end
 end
