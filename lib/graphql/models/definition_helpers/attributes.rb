@@ -62,19 +62,18 @@ module GraphQL
       # @param model_type The class object for the model that defines the attribute
       # @param path The associations (in order) that need to be loaded, starting from the graph_type's model
       # @param attribute The name of the attribute that is accessed on the target model_type
-      def self.define_attribute(graph_type, model_type, path, attribute, options)
-        graph_model_type = graph_type.instance_variable_get(:@model_type)
-
+      def self.define_attribute(graph_type, base_model_type, model_type, path, attribute, object_to_model, options)
         column = get_column(model_type, attribute)
         field_name = options[:name] || column.camel_name
 
-        DefinitionHelpers.register_field_metadata(graph_model_type, field_name, {
+        DefinitionHelpers.register_field_metadata(graph_type, field_name, {
           macro: :attr,
           macro_type: :attribute,
-          type_proc: -> { column.graphql_type },
           path: path,
           attribute: attribute,
-          options: options
+          base_model_type: base_model_type,
+          model_type: model_type,
+          object_to_base_model: object_to_model
         })
 
         graph_type.fields[field_name.to_s] = GraphQL::Field.define do
@@ -83,19 +82,17 @@ module GraphQL
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (base_model, args, context) do
-            DefinitionHelpers.load_and_traverse(base_model, path, context).then do |model|
-              next nil unless model
-
-              if column.is_range
-                DefinitionHelpers.range_to_graphql(model.public_send(attribute))
+          resolve -> (model, args, context) do
+            return nil unless model
+            
+            if column.is_range
+              DefinitionHelpers.range_to_graphql(model.public_send(attribute))
+            else
+              if model_type.graphql_resolvers.include?(attribute)
+                resolve_proc = model_type.graphql_resolvers[attribute]
+                model.instance_exec(&resolve_proc)
               else
-                if model_type.graphql_resolvers.include?(attribute)
-                  resolve_proc = model_type.graphql_resolvers[attribute]
-                  model.instance_exec(&resolve_proc)
-                else
-                  model.public_send(attribute)
-                end
+                model.public_send(attribute)
               end
             end
           end

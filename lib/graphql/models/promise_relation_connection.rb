@@ -11,7 +11,7 @@ module GraphQL
         relation = relation.limit(limit) if first
         request = RelationLoadRequest.new(relation)
 
-        Loader.for(request.target_class).load(request).then do |models|
+        request.load.then do |models|
           models.map { |m| GraphQL::Relay::Edge.new(m, self) }
         end
       end

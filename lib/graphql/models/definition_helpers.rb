@@ -25,7 +25,7 @@ module GraphQL
         end
 
         request = AssociationLoadRequest.new(current_model, path[0], context)
-        Loader.for(request.target_class).load(request).then do |next_model|
+        request.load.then do |next_model|
           next next_model if next_model.blank?
           cache_model(context, next_model)
 
@@ -103,42 +103,13 @@ module GraphQL
         return validators.map { |v| v.options[:in] }.reduce(:&)
       end
 
-      # Defines a special attribute field (eg, 'attachment')
-      def self.define_attribute_type_field(graph_type, path, attr_type, field_name, options)
-        graph_model_type = graph_type.instance_variable_get(:@model_type)
-
-        camel_name = options[:name] || field_name.to_s.camelize(:lower).to_sym
-
-        DefinitionHelpers.register_field_metadata(graph_model_type, camel_name, {
-          macro: attr_type.name,
-          macro_type: :virtual,
-          type_proc: attr_type.graph_type_proc,
-          path: path,
-          options: options
-        })
-
-        graph_type.fields[camel_name.to_s] = GraphQL::Field.define do
-          name camel_name.to_s
-          type attr_type.graph_type_proc
-          description options[:description] if options.include?(:description)
-          deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
-
-          resolve -> (base_model, args, context) do
-            DefinitionHelpers.load_and_traverse(base_model, path, context).then do |model|
-              next nil unless model
-              next attr_type.resolve(model, field_name)
-            end
-          end
-        end
-      end
-
       # Stores metadata about GraphQL fields that are available on this model's GraphQL type.
       # @param metadata Should be a hash that contains information about the field's definition, including :macro and :type
-      def self.register_field_metadata(model_type, field_name, metadata)
+      def self.register_field_metadata(graph_type, field_name, metadata)
         field_name = field_name.to_s
 
-        field_meta = model_type.instance_variable_get(:@_graphql_field_metadata)
-        field_meta = model_type.instance_variable_set(:@_graphql_field_metadata, {}) unless field_meta
+        field_meta = graph_type.instance_variable_get(:@field_metadata)
+        field_meta = graph_type.instance_variable_set(:@field_metadata, {}) unless field_meta
         field_meta[field_name] = OpenStruct.new(metadata).freeze
       end
     end
