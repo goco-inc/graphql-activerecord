@@ -12,7 +12,6 @@ require 'graphql/models/loader'
 # Order matters...
 require 'graphql/models/promise_relation_connection'
 require 'graphql/models/relation_load_request'
-require 'graphql/models/identification'
 require 'graphql/models/scalar_types'
 require 'graphql/models/definition_helpers'
 require 'graphql/models/definition_helpers/associations'
