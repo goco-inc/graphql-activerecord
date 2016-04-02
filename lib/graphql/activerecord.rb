@@ -1,6 +1,7 @@
 require 'graphql'
 
 require 'graphql/models/monkey_patches/graphql_query_context'
+require 'graphql/models/monkey_patches/graphql_schema_middleware_chain'
 require 'graphql/models/active_record_extension'
 require 'graphql/models/middleware'
 
