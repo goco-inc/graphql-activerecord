@@ -12,12 +12,17 @@ module GraphQL
         GraphQL::Define::TypeDefiner.instance
       end
 
+      def object_to_model(value = nil)
+        @object_to_model = value if value
+        @object_to_model
+      end
+
       def attr(name, **options)
         DefinitionHelpers.define_attribute(graph_type, model_type, model_type, [], name, object_to_model, options)
       end
 
       def proxy_to(association, &block)
-        DefinitionHelpers.define_proxy(graph_type, model_type, model_type, [], association, &object_to_model, block)
+        DefinitionHelpers.define_proxy(graph_type, model_type, model_type, [], association, object_to_model, &block)
       end
 
       def has_one(association, **options)
