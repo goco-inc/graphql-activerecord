@@ -34,7 +34,7 @@ module GraphQL
           fail ArgumentError.new("Cannot include polymorphic #{reflection.name} association on model #{model_type.name}, because it does not define an inclusion validator on #{reflection.foreign_type}")
         end
 
-        return ->() do
+        return ->() {
           graph_types = valid_types.map { |t| "#{t}Graph".safe_constantize }.compact
 
           GraphQL::UnionType.define do
@@ -42,7 +42,7 @@ module GraphQL
             description "Objects that can be used as #{reflection.foreign_type.titleize.downcase} on #{model_type.name.titleize.downcase}"
             possible_types graph_types
           end
-        end
+        }
       end
 
       # Adds a field to the graph type which is resolved by accessing a has_one association on the model. Traverses
@@ -72,10 +72,10 @@ module GraphQL
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (model, args, context) do
+          resolve -> (model, args, context) {
             return nil unless model
             DefinitionHelpers.load_and_traverse(model, [association], context)
-          end
+          }
         end
       end
 
@@ -104,12 +104,12 @@ module GraphQL
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (model, args, context) do
+          resolve ->(model, args, context) {
             return nil unless model
             DefinitionHelpers.load_and_traverse(model, [association], context).then do |result|
               Array.wrap(result)
             end
-          end
+          }
         end
       end
 
@@ -133,10 +133,10 @@ module GraphQL
         })
 
         GraphQL::Relay::Define::AssignConnection.call(graph_type, camel_name, type_lambda) do
-          resolve -> (model, args, context) do
+          resolve -> (model, args, context) {
             return nil unless model
             return GraphSupport.secure(model.public_send(association), context)
-          end
+          }
         end
       end
     end
