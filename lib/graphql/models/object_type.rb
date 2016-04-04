@@ -11,14 +11,14 @@ module GraphQL
         def model_type(graph_type, model_type)
           model_type = model_type.to_s.classify.constantize unless model_type.is_a?(Class)
 
-          object_to_model = -> (object) do
+          object_to_model = -> (object) {
             model_proc = graph_type.instance_variable_get(:@unscoped_object_to_model)
             if model_proc
               model_proc.call(object)
             else
               DEFAULT_OBJECT_TO_MODEL.call(object)
             end
-          end
+          }
 
           graph_type.instance_variable_set(:@unscoped_model_type, model_type)
 
@@ -36,19 +36,19 @@ module GraphQL
           graph_type.fields['rid'] = GraphQL::Field.define do
             name 'rid'
             type !types.String
-            resolve -> (object, args, context) do
+            resolve -> (object, args, context) {
               model = object_to_model.call(object)
               model.id
-            end
+            }
           end
 
           graph_type.fields['rtype'] = GraphQL::Field.define do
             name 'rtype'
             type !types.String
-            resolve -> (object, args, context) do
+            resolve -> (object, args, context) {
               model = object_to_model.call(object)
               model.class.name
-            end
+            }
           end
 
           if model_type.columns.detect { |c| c.name == 'created_at'}

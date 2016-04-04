@@ -82,9 +82,9 @@ module GraphQL
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (model, args, context) do
+          resolve -> (model, args, context) {
             return nil unless model
-            
+
             if column.is_range
               DefinitionHelpers.range_to_graphql(model.public_send(attribute))
             else
@@ -95,7 +95,7 @@ module GraphQL
                 model.public_send(attribute)
               end
             end
-          end
+          }
         end
       end
     end

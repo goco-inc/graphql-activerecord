@@ -44,10 +44,10 @@ module GraphQL
         internal_resolver = defined_field.resolve_proc
         object_to_model = self.object_to_model # because resolver executes in different context
 
-        defined_field.resolve = -> (object, args, context) do
+        defined_field.resolve = -> (object, args, context) {
           model = object_to_model.call(object)
           internal_resolver.call(model, args, context)
-        end
+        }
 
         defined_field
       end
