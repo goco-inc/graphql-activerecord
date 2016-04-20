@@ -19,11 +19,11 @@ module GraphQL
           options[:name] ||= "#{self.name}#{attribute.to_s.classify}"
           options[:description] ||= "#{attribute.to_s.titleize} field on #{self.name.titleize}"
 
-          if !options[:values] && !options[:type]
+          if !options.include?(:values) && !options.include?(:type)
             if defined_enums.include?(attribute.to_s)
               options[:values] = defined_enums[attribute.to_s].keys.map { |ev| [options[:upcase] ? ev.upcase : ev, ev.titleize] }.to_h
             else
-              fail ArgumentError("Could not auto-detect the values for enum #{attribute} on #{self.name}")
+              fail ArgumentError.new("Could not auto-detect the values for enum #{attribute} on #{self.name}")
             end
           end
 
@@ -52,7 +52,7 @@ module GraphQL
         # Defines a custom method that is used to resolve this attribute's value when it is included
         # on a GraphQL type.
         def graphql_resolve(attribute, &block)
-          fail ArgumentError("#{__method__} requires a block") unless block_given?
+          fail ArgumentError.new("#{__method__} requires a block") unless block_given?
           graphql_resolvers[attribute] = block
         end
       end
