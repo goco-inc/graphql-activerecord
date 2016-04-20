@@ -3,9 +3,12 @@ module GraphQL
     class BackedByModel
       attr_accessor :graph_type, :model_type, :object_to_model
 
+      DEFAULT_OBJECT_TO_MODEL = -> (obj) { obj }
+
       def initialize(graph_type, model_type)
         @graph_type = graph_type
         @model_type = model_type
+        @object_to_model = DEFAULT_OBJECT_TO_MODEL
       end
 
       def types
