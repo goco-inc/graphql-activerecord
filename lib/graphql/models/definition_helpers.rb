@@ -61,7 +61,7 @@ module GraphQL
           return true
         else
           target = context.cached_models.detect do |m|
-            m.is_a?(association.klass) && m.send(reflection.foreign_key) == model.id && (!reflection.options.include?[:as] || m.send(reflection.type) == model.class.name)
+            m.is_a?(association.klass) && m.send(reflection.foreign_key) == model.id && (!reflection.options.include?(:as) || m.send(reflection.type) == model.class.name)
           end
 
           return false unless target
