@@ -43,14 +43,14 @@ module GraphQL
       def field(*args, &block)
         defined_field = GraphQL::Define::AssignObjectField.call(graph_type, *args, &block)
 
-        # Wrap the underlying field's resolve, so that it is injected with the model at the current path
-        internal_resolver = defined_field.resolve_proc
-        object_to_model = self.object_to_model # because resolver executes in different context
-
-        defined_field.resolve = -> (object, args, context) do
-          model = object_to_model.call(object)
-          internal_resolver.call(model, args, context)
-        end
+        DefinitionHelpers.register_field_metadata(graph_type, defined_field.name, {
+          macro: :field,
+          macro_type: :custom,
+          path: [],
+          base_model_type: @model_type.to_s.classify.constantize,
+          model_type: @model_type.to_s.classify.constantize,
+          object_to_base_model: object_to_model
+        })
 
         defined_field
       end
