@@ -46,7 +46,15 @@ module GraphQL
           arel = relation.arel
           next nil unless arel.orders.any?
 
-          %{ RANK() OVER (ORDER BY #{arel.orders.map(&:to_sql).join(', ')}) AS "sort_relation_#{index}" }
+          order_by = arel.orders.map do |expr|
+            if expr.is_a?(Arel::Nodes::SqlLiteral)
+              expr.to_s
+            else
+              expr.to_sql
+            end
+          end
+
+          %{ RANK() OVER (ORDER BY #{order_by.join(', ')}) AS "sort_relation_#{index}" }
         end
 
         sorting_columns.compact!
