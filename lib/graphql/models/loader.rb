@@ -8,6 +8,7 @@ module GraphQL
       end
 
       def perform(load_requests)
+
         # Group the requests to load by id into a single relation, and we'll fan it back out after
         # we have the results
 
@@ -21,8 +22,9 @@ module GraphQL
         # Gather up all of the requests to load a relation, and map the relations back to their requests
         load_requests.select { |r| r.load_type == :relation }.each do |request|
           relation = request.load_target
-          relations.push(relation)
-          relations_to_requests[relation.object_id] = request
+          relations.push(relation) unless relations.detect { |r| r.object_id == relation.object_id }
+          relations_to_requests[relation.object_id] ||= []
+          relations_to_requests[relation.object_id].push(request)
         end
 
         # We need to build a query that will return all of the rows that match any of the relations.
@@ -84,10 +86,11 @@ module GraphQL
               row = matching_rows.detect { |r| r[pk] == request.load_target }
               fulfill(request, row)
             end
+          else
+            relations_to_requests[relation.object_id].each do |request|
+              fulfill_request(request, matching_rows)
+            end
           end
-
-          request = relations_to_requests[relation.object_id]
-          fulfill_request(request, matching_rows) if request
         end
       end
 
