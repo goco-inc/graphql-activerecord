@@ -27,7 +27,7 @@ module GraphQL
 
       def self.get_column(model_type, name)
         col = model_type.columns.detect { |c| c.name == name.to_s }
-        raise ArgumentError.new("The attribute #{name} wasn't found on model #{model_type.name}.") unless col
+        return nil unless col
 
         if model_type.graphql_enum_types.include?(name)
           graphql_type = model_type.graphql_enum_types[name]
@@ -42,8 +42,15 @@ module GraphQL
         return OpenStruct.new({
           is_range: /range\z/ === col.type.to_s,
           camel_name: name.to_s.camelize(:lower).to_sym,
-          graphql_type: graphql_type
+          graphql_type: graphql_type,
+          nullable: col.null
         })
+      end
+
+      def self.get_column!(model_type, name)
+        col = get_column(model_type, name)
+        raise ArgumentError.new("The attribute #{name} wasn't found on model #{model_type.name}.") unless col
+        col
       end
 
       def self.range_to_graphql(value)
@@ -63,7 +70,7 @@ module GraphQL
       # @param path The associations (in order) that need to be loaded, starting from the graph_type's model
       # @param attribute The name of the attribute that is accessed on the target model_type
       def self.define_attribute(graph_type, base_model_type, model_type, path, attribute, object_to_model, options)
-        column = get_column(model_type, attribute)
+        column = get_column!(model_type, attribute)
         field_name = options[:name] || column.camel_name
 
         DefinitionHelpers.register_field_metadata(graph_type, field_name, {
@@ -84,7 +91,7 @@ module GraphQL
 
           resolve -> (model, args, context) do
             return nil unless model
-            
+
             if column.is_range
               DefinitionHelpers.range_to_graphql(model.public_send(attribute))
             else

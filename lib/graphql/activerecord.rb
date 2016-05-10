@@ -17,10 +17,13 @@ require 'graphql/models/scalar_types'
 require 'graphql/models/definition_helpers'
 require 'graphql/models/definition_helpers/associations'
 require 'graphql/models/definition_helpers/attributes'
+require 'graphql/models/mutation_helpers/print_input_fields'
+require 'graphql/models/mutation_field_map'
 
 require 'graphql/models/proxy_block'
 require 'graphql/models/backed_by_model'
 require 'graphql/models/object_type'
+require 'graphql/models/relay_mutation'
 
 
 module GraphQL
