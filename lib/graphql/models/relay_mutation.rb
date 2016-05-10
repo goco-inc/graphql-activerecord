@@ -2,7 +2,7 @@ module GraphQL::Models
   class RelayMutation
     include GraphQL::Define::InstanceDefinable
 
-    attr_accessor :name, :resolve, :field_maps, :return_fields
+    attr_accessor :name, :resolve, :field_maps, :return_fields, :extra_input_fields
 
     accepts_definitions(
       :name,
@@ -18,6 +18,10 @@ module GraphQL::Models
 
       return_field: -> (instance, name, type) do
         instance.return_fields[name] = type
+      end,
+
+      input_field: -> (instance, *args) do
+        instance.extra_input_fields.push(args)
       end
     )
 
@@ -38,6 +42,10 @@ module GraphQL::Models
 
         mutation.field_maps.each do |map|
           MutationHelpers.print_input_fields(map, self, mutation.name)
+        end
+
+        Array.wrap(mutation.extra_input_fields).each do |args|
+          input_field(*args)
         end
 
         mutation.return_fields.each do |name, type|
@@ -67,17 +75,17 @@ module GraphQL::Models
                 all_changes.push({ model_instance: root_model, action: :create })
               end
 
-              # Authorize the changes
-              # MutationHelpers.authorize_changes(context, all_changes)
-
               # Validate the changes
-              # MutationHelpers.validate_changes(context, all_changes)
+              MutationHelpers.validate_changes(inputs, map, root_model, context, all_changes)
+
+              # Authorize the changes
+              MutationHelpers.authorize_changes(context, all_changes)
 
               # Save the changes
               all_changes.map { |c| c[:model_instance] }.uniq.each(&:save!)
 
               # Return the result
-              root_model
+              root_model.reload
             end
 
             # Invoke the resolver to get the final return value for the mutation

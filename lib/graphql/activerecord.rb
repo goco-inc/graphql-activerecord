@@ -20,6 +20,7 @@ require 'graphql/models/definition_helpers/attributes'
 require 'graphql/models/mutation_helpers/print_input_fields'
 require 'graphql/models/mutation_helpers/apply_changes'
 require 'graphql/models/mutation_helpers/authorization'
+require 'graphql/models/mutation_helpers/validation_error'
 require 'graphql/models/mutation_helpers/validation'
 require 'graphql/models/mutation_field_map'
 

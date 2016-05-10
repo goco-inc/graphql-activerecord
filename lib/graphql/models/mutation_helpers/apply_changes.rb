@@ -15,7 +15,8 @@ module GraphQL::Models
         next unless field_def
 
         # Advance to the model that we actually need to change
-        change_model = model_to_change(model, field_def[:path], changes)
+        change_model = model_to_change(model, field_def[:path], changes, create_if_missing: !value.nil?)
+        next if change_model.nil?
 
         # Apply the change to this model
         apply_field_value(change_model, field_def, value, context, changes)
@@ -26,7 +27,8 @@ module GraphQL::Models
         next if inputs[child_map.name].nil? && field_map.leave_null_unchanged?
 
         # Advance to the model that contains the nested fields
-        change_model = model_to_change(model, child_map.path, changes)
+        change_model = model_to_change(model, child_map.path, changes, create_if_missing: !inputs[child_map.name].nil?)
+        next if change_model.nil?
 
         # Apply the changes to the nested models
         child_changes = handle_nested_map(field_map, change_model, inputs, context, child_map)
@@ -48,19 +50,7 @@ module GraphQL::Models
       return [] if next_inputs.nil? && parent_map.leave_null_unchanged?
 
       changes = []
-
-      if child_map.has_many
-        matches = match_inputs_to_models(parent_model, child_map, next_inputs, changes)
-      else
-        child_model = parent_model.public_send(child_map.association)
-
-        unless child_model
-          child_model = parent_model.public_send("build_#{child_map.association}")
-          changes.push({ model_instance: child_model, action: :create })
-        end
-
-        matches = [{ child_model: child_model, child_inputs: next_inputs }]
-      end
+      matches = match_inputs_to_models(parent_model, child_map, next_inputs, changes)
 
       matches.each do |match|
         child_changes = apply_changes(child_map, match[:child_model], match[:child_inputs], context)
@@ -78,16 +68,27 @@ module GraphQL::Models
     end
 
     def self.match_inputs_to_models(model, child_map, next_inputs, changes)
-      next_inputs = [] if next_inputs.nil?
+      if !child_map.has_many
+        child_model = model.public_send(child_map.association)
 
-      # Match up each of the elements in next_inputs with one of the models, based on the `find_by` value.
-      associated_models = model.public_send(child_map.association)
-      find_by = Array.wrap(child_map.find_by).map(&:to_s)
+        unless child_model
+          child_model = model.public_send("build_#{child_map.association}")
+          changes.push({ model_instance: child_model, action: :create })
+        end
 
-      if find_by.empty?
-        return match_inputs_by_position(model, child_map, next_inputs, changes, associated_models, find_by)
+        return [{ child_model: child_model, child_inputs: next_inputs }]
       else
-        return match_inputs_by_fields(model, child_map, next_inputs, changes, associated_models, find_by)
+        next_inputs = [] if next_inputs.nil?
+
+        # Match up each of the elements in next_inputs with one of the models, based on the `find_by` value.
+        associated_models = model.public_send(child_map.association)
+        find_by = Array.wrap(child_map.find_by).map(&:to_s)
+
+        if find_by.empty?
+          return match_inputs_by_position(model, child_map, next_inputs, changes, associated_models, find_by)
+        else
+          return match_inputs_by_fields(model, child_map, next_inputs, changes, associated_models, find_by)
+        end
       end
     end
 
@@ -153,11 +154,13 @@ module GraphQL::Models
 
     # Returns the instance of the model that will be changed for this field. If new models are created along the way,
     # they are added to the list of changes.
-    def self.model_to_change(starting_model, path, changes)
+    def self.model_to_change(starting_model, path, changes, create_if_missing: true)
       model_to_change = starting_model
 
       Array.wrap(path).each do |ps|
         next_model = model_to_change.public_send(ps)
+
+        return nil if next_model.nil? && !create_if_missing
 
         unless next_model
           next_model = model_to_change.public_send("build_#{ps}")
