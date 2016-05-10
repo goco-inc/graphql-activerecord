@@ -18,6 +18,9 @@ require 'graphql/models/definition_helpers'
 require 'graphql/models/definition_helpers/associations'
 require 'graphql/models/definition_helpers/attributes'
 require 'graphql/models/mutation_helpers/print_input_fields'
+require 'graphql/models/mutation_helpers/apply_changes'
+require 'graphql/models/mutation_helpers/authorization'
+require 'graphql/models/mutation_helpers/validation'
 require 'graphql/models/mutation_field_map'
 
 require 'graphql/models/proxy_block'
@@ -29,7 +32,7 @@ require 'graphql/models/relay_mutation'
 module GraphQL
   module Models
     class << self
-      attr_accessor :node_interface_proc
+      attr_accessor :node_interface_proc, :model_from_id, :authorize
     end
 
     # Returns a promise that will traverse the associations and resolve to the model at the end of the path.
@@ -52,6 +55,10 @@ module GraphQL
       return nil unless meta
 
       meta[field_name]
+    end
+
+    def self.authorize!(context, model, action)
+      authorize.call(context, model, action)
     end
   end
 end

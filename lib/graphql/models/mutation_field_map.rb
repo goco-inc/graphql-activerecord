@@ -3,7 +3,7 @@ module GraphQL::Models
     attr_accessor :model_type, :find_by, :null_behavior, :fields, :nested_maps
 
     # These are used when this is a proxy_to or a nested field map
-    attr_accessor :name, :association, :has_many, :required
+    attr_accessor :name, :association, :has_many, :required, :path
 
     def initialize(model_type, find_by:, null_behavior:)
       fail ArgumentError.new("model_type must be a model") if model_type && !(model_type <= ActiveRecord::Base)
@@ -11,6 +11,7 @@ module GraphQL::Models
 
       @fields = []
       @nested_maps = []
+      @path = []
       @model_type = model_type
       @find_by = Array.wrap(find_by)
       @null_behavior = null_behavior
@@ -94,7 +95,10 @@ module GraphQL::Models
         })
       end
 
-      nested_maps.concat(proxy.nested_maps)
+      proxy.nested_maps.each do |m|
+        m.path.unshift(association)
+        nested_maps.push(m)
+      end
     end
 
     def nested(association, find_by: nil, null_behavior:, name: nil, has_many: false, &block)
@@ -110,7 +114,7 @@ module GraphQL::Models
       end
 
       if reflection.polymorphic?
-        fail ArgumentError.new("Canont used `nested` with polymorphic association #{association} on #{model_type.name}")
+        fail ArgumentError.new("Cannot used `nested` with polymorphic association #{association} on #{model_type.name}")
       end
 
       has_many = reflection.macro == :has_many
