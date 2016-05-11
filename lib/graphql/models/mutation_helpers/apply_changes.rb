@@ -220,7 +220,7 @@ module GraphQL::Models
       values = inputs.to_h.compact
 
       field_map.fields.reject { |f| values.include?(f[:name]) }.each { |f| values[f[:name]] = nil }
-      field_map.nested_maps.reject { |f| values.include?(f[:name]) }.each { |m| values[m.name] = nil }
+      field_map.nested_maps.reject { |m| values.include?(m.name) }.each { |m| values[m.name] = nil }
 
       values
     end
