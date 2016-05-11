@@ -27,7 +27,7 @@ require 'graphql/models/mutation_field_map'
 require 'graphql/models/proxy_block'
 require 'graphql/models/backed_by_model'
 require 'graphql/models/object_type'
-require 'graphql/models/relay_mutation'
+require 'graphql/models/mutator'
 
 
 module GraphQL
@@ -60,6 +60,13 @@ module GraphQL
 
     def self.authorize!(context, model, action)
       authorize.call(context, model, action)
+    end
+
+    def self.define_mutator(definer, model_type, null_behavior:, &block)
+      mutator_definition = MutatorDefinition.new(model_type, null_behavior: null_behavior)
+      mutator_definition.field_map.instance_exec(&block)
+      MutationHelpers.print_input_fields(mutator_definition.field_map, definer, model_type.name)
+      mutator_definition
     end
   end
 end
