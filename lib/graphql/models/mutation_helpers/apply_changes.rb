@@ -129,7 +129,7 @@ module GraphQL::Models
       grouped_models.each do |key_attrs, vals|
         child_model = vals[0]
 
-        inputs = grouped_inputs[key_attrs]
+        inputs = grouped_inputs[key_attrs][0]
 
         if inputs.nil?
           child_model.mark_for_destruction
