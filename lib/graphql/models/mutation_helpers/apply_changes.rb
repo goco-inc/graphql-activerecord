@@ -219,8 +219,8 @@ module GraphQL::Models
     def self.prep_set_null(field_map, inputs)
       values = inputs.to_h.compact
 
-      field_map.fields.each { |f| values[f[:name]] ||= nil }
-      field_map.nested_maps.each { |m| values[m.name] ||= nil }
+      field_map.fields.reject { |f| values.include?(f[:name]) }.each { |f| values[f[:name]] = nil }
+      field_map.nested_maps.reject { |f| values.include?(f[:name]) }.each { |m| values[m.name] = nil }
 
       values
     end
