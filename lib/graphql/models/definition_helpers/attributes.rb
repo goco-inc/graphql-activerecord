@@ -95,12 +95,7 @@ module GraphQL
             if column.is_range
               DefinitionHelpers.range_to_graphql(model.public_send(attribute))
             else
-              if model_type.graphql_resolvers.include?(attribute)
-                resolve_proc = model_type.graphql_resolvers[attribute]
-                model.instance_exec(&resolve_proc)
-              else
-                model.public_send(attribute)
-              end
+              model.public_send(attribute)
             end
           end
         end
