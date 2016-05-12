@@ -129,8 +129,9 @@ module GraphQL::Models
       grouped_models.each do |key_attrs, vals|
         child_model = vals[0]
 
-        inputs = grouped_inputs[key_attrs][0]
-
+        inputs = grouped_inputs[key_attrs]
+        inputs = inputs[0] if inputs
+                
         if inputs.nil?
           child_model.mark_for_destruction
           changes.push({ model_instance: child_model, action: :destroy })

@@ -32,7 +32,17 @@ module GraphQL::Models
 
     def save!
       fail StandardError.new("Need to call apply_changes before #{__method__}") unless @all_changes
-      changed_models.each(&:save!).each(&:reload)
+      changed_models.each do |model|
+        next if model.destroyed?
+        
+        if model.marked_for_destruction?
+          model.destroy
+        else
+          model.save!
+        end
+      end
+
+      changed_models.reject(&:destroyed?).each(&:reload)
     end
   end
 
