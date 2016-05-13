@@ -1,10 +1,29 @@
 module GraphQL
   module Models
     module ActiveRecordExtension
+      class EnumTypeHash
+        extend Forwardable
+
+        attr_accessor :hash
+
+        def initialize
+          @hash = {}.with_indifferent_access
+        end
+
+        def [](attribute)
+          type = hash[attribute]
+          type = type.call if type.is_a?(Proc)
+          type = type.constantize if type.is_a?(String)
+          type
+        end
+
+        def_delegators :@hash, :[]=, :include?, :keys
+      end
+
       extend ActiveSupport::Concern
       class_methods do
         def graphql_enum_types
-          @_graphql_enum_types ||= {}.with_indifferent_access
+          @_graphql_enum_types ||= EnumTypeHash.new
         end
 
         # Defines a GraphQL enum type on the model
