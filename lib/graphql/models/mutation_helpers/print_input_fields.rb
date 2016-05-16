@@ -13,7 +13,15 @@ module GraphQL::Models
         end
 
         if field_map.leave_null_unchanged?
-          input_field('unsetFields', types[!types.String])
+          field_names = field_map.fields.map { |f| f[:name] } + field_map.nested_maps.map { |m| m.name }
+          field_names = field_names.sort_by { |s| s }
+
+          enum = GraphQL::EnumType.define do
+            name "#{map_name_prefix}UnsettableFields"
+            field_names.each { |n| value(n, n.titleize, value: n) }
+          end
+
+          input_field('unsetFields', types[!enum])
         end
       end
 
