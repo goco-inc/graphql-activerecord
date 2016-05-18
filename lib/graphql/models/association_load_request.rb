@@ -56,6 +56,7 @@ module GraphQL
         association.loaded!
 
         if reflection.macro == :has_many
+          association.target.slice!(0)
           association.target.concat(result)
           result.each do |m|
             association.set_inverse_instance(m)
