@@ -85,14 +85,14 @@ module GraphQL::Models
         find_by = Array.wrap(child_map.find_by).map(&:to_s)
 
         if find_by.empty?
-          return match_inputs_by_position(model, child_map, next_inputs, changes, associated_models, find_by)
+          return match_inputs_by_position(model, child_map, next_inputs, changes, associated_models)
         else
           return match_inputs_by_fields(model, child_map, next_inputs, changes, associated_models, find_by)
         end
       end
     end
 
-    def self.match_inputs_by_position(model, child_map, next_inputs, changes, associated_models, find_by)
+    def self.match_inputs_by_position(model, child_map, next_inputs, changes, associated_models)
       count = [associated_models.length, next_inputs.length].max
 
       matches = []
@@ -118,20 +118,30 @@ module GraphQL::Models
     end
 
     def self.match_inputs_by_fields(model, child_map, next_inputs, changes, associated_models, find_by)
-      grouped_models = associated_models.group_by { |m| m.attributes.slice(*find_by) }
-      grouped_inputs = next_inputs.group_by { |ni| ni.to_h.slice(*find_by) }
+      # Convert the find_by into the field definitions, so that we properly unmap aliased fields
+      find_by_defs = find_by.map { |name| child_map.fields.detect { |f| f[:attribute].to_s == name.to_s } }
+      name_to_attr = find_by_defs.map { |f| [f[:name], f[:attribute].to_s] }.to_h
+
+      indexed_models = associated_models.index_by { |m| m.attributes.slice(*find_by) }
+
+      # Inputs are a little nasty, the keys have to be converted from camelCase back to snake_case
+      indexed_inputs = next_inputs.index_by { |ni| ni.to_h.slice(*name_to_attr.keys) }
+
+      indexed_inputs = indexed_inputs.map do |key, inputs|
+        key = key.map { |name, val| [name_to_attr[name], val] }.to_h
+        [key, inputs]
+      end
+
+      indexed_inputs = indexed_inputs.to_h
 
       # Match each model to its input. If there is no input for it, mark that the model should be destroyed.
       matches = []
 
       # TODO: Support for finding by an ID field, that needs to be untranslated from a Relay ID into a model ID
 
-      grouped_models.each do |key_attrs, vals|
-        child_model = vals[0]
+      indexed_models.each do |key_attrs, child_model|
+        inputs = indexed_inputs[key_attrs]
 
-        inputs = grouped_inputs[key_attrs]
-        inputs = inputs[0] if inputs
-                
         if inputs.nil?
           child_model.mark_for_destruction
           changes.push({ model_instance: child_model, action: :destroy })
@@ -141,10 +151,9 @@ module GraphQL::Models
       end
 
       # Build a new model for each input that doesn't have a model
-      grouped_inputs.each do |key_attrs, vals|
-        inputs = vals[0]
+      indexed_inputs.each do |key_attrs, inputs|
+        next if indexed_models.include?(key_attrs)
 
-        next if grouped_models.include?(key_attrs)
         child_model = associated_models.build
         changes.push({ model_instance: child_model, action: :create })
         matches.push({ child_model: child_model, child_inputs: inputs, input_path: next_inputs.index(inputs) })
