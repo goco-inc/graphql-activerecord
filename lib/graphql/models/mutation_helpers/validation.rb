@@ -63,7 +63,16 @@ module GraphQL::Models
         return Array.wrap(field[:name]) if candidate_model == target_model
       end
 
-      # Case 2: The input field is somewhere inside of a nested field map.
+      # Case 2: The input field *is* a nested map
+      candidate_maps = field_map.nested_maps.select { |m| m.association == attribute.to_s }
+
+      candidate_maps.each do |map|
+        # Walk to this field. If the model we get is the same as the target model, we found a match.
+        candidate_model = model_to_change(starting_model, map.path, [], create_if_missing: false)
+        return Array.wrap(map.name) if candidate_model == target_model
+      end
+
+      # Case 3: The input field is somewhere inside of a nested field map.
       field_map.nested_maps.each do |child_map|
         # If we don't have the values for this map, it can't be the right one.
         next if inputs[child_map.name].blank?
