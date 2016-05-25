@@ -33,7 +33,7 @@ require 'graphql/models/mutator'
 module GraphQL
   module Models
     class << self
-      attr_accessor :node_interface_proc, :model_from_id, :authorize
+      attr_accessor :node_interface_proc, :model_from_id, :authorize, :id_for_model
     end
 
     # Returns a promise that will traverse the associations and resolve to the model at the end of the path.

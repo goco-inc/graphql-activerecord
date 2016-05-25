@@ -53,7 +53,11 @@ module GraphQL
         fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
         fail ArgumentError.new("Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_one") unless [:has_one, :belongs_to].include?(reflection.macro)
 
-        camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
+        # Define the field for the association itself
+
+        camel_name = options[:name] || association.to_s.camelize(:lower)
+        camel_name = camel_name.to_sym if camel_name.is_a?(String)
+
         type_lambda = resolve_has_one_type(reflection)
 
         DefinitionHelpers.register_field_metadata(graph_type, camel_name, {
@@ -75,6 +79,46 @@ module GraphQL
           resolve -> (model, args, context) do
             return nil unless model
             DefinitionHelpers.load_and_traverse(model, [association], context)
+          end
+        end
+
+        # Define the field for the associated model's ID
+        id_field_name = :"#{camel_name}Id"
+
+        DefinitionHelpers.register_field_metadata(graph_type, id_field_name, {
+          macro: :has_one,
+          macro_type: :association,
+          path: path,
+          association: association,
+          base_model_type: base_model_type,
+          model_type: model_type,
+          object_to_base_model: object_to_model
+        })
+
+        can_use_optimized = reflection.macro == :belongs_to
+
+        if !reflection.polymorphic? && reflection.klass.column_names.include?('type')
+          can_use_optimized = false
+        end
+
+        graph_type.fields[id_field_name.to_s] = GraphQL::Field.define do
+          name id_field_name.to_s
+          type types.ID
+          deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
+
+          resolve -> (model, args, context) do
+            return nil unless model
+
+            if can_use_optimized
+              id = model.public_send(reflection.foreign_key)
+              return nil if id.nil?
+
+              type = model.association(association).klass.name
+              GraphQL::Models.id_for_model.call(type, id)
+            else
+              # We have to actually load the model and then get it's ID
+              DefinitionHelpers.load_and_traverse(model, [association], context).then(&:gid)
+            end
           end
         end
       end
@@ -108,6 +152,32 @@ module GraphQL
             return nil unless model
             DefinitionHelpers.load_and_traverse(model, [association], context).then do |result|
               Array.wrap(result)
+            end
+          end
+        end
+
+        # Define the field for the associated model's ID
+        id_field_name = :"#{camel_name.to_s.singularize}Ids"
+
+        DefinitionHelpers.register_field_metadata(graph_type, id_field_name, {
+          macro: :has_one,
+          macro_type: :association,
+          path: path,
+          association: association,
+          base_model_type: base_model_type,
+          model_type: model_type,
+          object_to_base_model: object_to_model
+        })
+
+        graph_type.fields[id_field_name.to_s] = GraphQL::Field.define do
+          name id_field_name.to_s
+          type types[!types.ID]
+          deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
+
+          resolve -> (model, args, context) do
+            return nil unless model
+            DefinitionHelpers.load_and_traverse(model, [association], context).then do |result|
+              Array.wrap(result).map(&:gid)
             end
           end
         end
