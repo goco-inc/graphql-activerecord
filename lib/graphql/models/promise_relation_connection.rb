@@ -17,6 +17,6 @@ module GraphQL
       end
     end
 
-    GraphQL::Relay::BaseConnection.register_connection_implementation(ActiveRecord::Relation, PromiseRelationConnection)
+    # GraphQL::Relay::BaseConnection.register_connection_implementation(ActiveRecord::Relation, PromiseRelationConnection)
   end
 end
