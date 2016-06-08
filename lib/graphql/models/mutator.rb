@@ -34,7 +34,7 @@ module GraphQL::Models
       fail StandardError.new("Need to call apply_changes before #{__method__}") unless @all_changes
       changed_models.each do |model|
         next if model.destroyed?
-        
+
         if model.marked_for_destruction?
           model.destroy
         else

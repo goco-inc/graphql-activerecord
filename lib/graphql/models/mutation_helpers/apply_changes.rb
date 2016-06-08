@@ -53,6 +53,8 @@ module GraphQL::Models
       matches = match_inputs_to_models(parent_model, child_map, next_inputs, changes)
 
       matches.each do |match|
+        next if match[:child_model].nil? && match[:child_inputs].nil?
+
         child_changes = apply_changes(child_map, match[:child_model], match[:child_inputs], context)
 
         if match[:input_path]
@@ -71,7 +73,10 @@ module GraphQL::Models
       if !child_map.has_many
         child_model = model.public_send(child_map.association)
 
-        unless child_model
+        if next_inputs.nil? && !child_model.nil?
+          child_model.mark_for_destruction
+          changes.push({ model_instance: child_model, action: :destroy })
+        elsif child_model.nil? && !next_inputs.nil?
           child_model = model.public_send("build_#{child_map.association}")
           changes.push({ model_instance: child_model, action: :create })
         end
