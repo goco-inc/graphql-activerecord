@@ -32,8 +32,8 @@ module GraphQL::Models
 
     def save!
       fail StandardError.new("Need to call apply_changes before #{__method__}") unless @all_changes
-      
-      ActiveRecord::Base.transaction do
+
+      ActiveRecord::Base.transaction(requires_new: true) do
         changed_models.each do |model|
           next if model.destroyed?
 
