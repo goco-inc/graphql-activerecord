@@ -63,9 +63,12 @@ module GraphQL
     end
 
     def self.define_mutator(definer, model_type, null_behavior:, &block)
+      # HACK: To get the name of the mutation, to avoid possible collisions with other type names
+      prefix = definer.instance_variable_get(:@target).name
+
       mutator_definition = MutatorDefinition.new(model_type, null_behavior: null_behavior)
       mutator_definition.field_map.instance_exec(&block)
-      MutationHelpers.print_input_fields(mutator_definition.field_map, definer, model_type.name)
+      MutationHelpers.print_input_fields(mutator_definition.field_map, definer, "#{prefix}Input")
       mutator_definition
     end
   end
