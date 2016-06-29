@@ -50,7 +50,10 @@ module GraphQL
           target_id = model.send(reflection.foreign_key)
 
           # If there isn't an associated model, mark the association loaded and return
-          mark_association_loaded(association, nil) and return true if target_id.nil?
+          if target_id.nil?
+            mark_association_loaded(association, nil)
+            return true
+          end
 
           # If the associated model isn't cached, return false
           target = context.cached_models.detect { |m| m.is_a?(association.klass) && m.id == target_id }
