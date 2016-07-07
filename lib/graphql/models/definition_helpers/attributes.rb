@@ -69,7 +69,7 @@ module GraphQL
       # @param model_type The class object for the model that defines the attribute
       # @param path The associations (in order) that need to be loaded, starting from the graph_type's model
       # @param attribute The name of the attribute that is accessed on the target model_type
-      def self.define_attribute(graph_type, base_model_type, model_type, path, attribute, object_to_model, options)
+      def self.define_attribute(graph_type, base_model_type, model_type, path, attribute, object_to_model, options, &block)
         column = get_column!(model_type, attribute)
         field_name = options[:name] || column.camel_name
 
@@ -98,6 +98,8 @@ module GraphQL
               model.public_send(attribute)
             end
           end
+          
+          instance_exec(&block) if block
         end
       end
     end

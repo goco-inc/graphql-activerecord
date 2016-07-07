@@ -13,8 +13,8 @@ module GraphQL
         GraphQL::Define::TypeDefiner.instance
       end
 
-      def attr(name, **options)
-        DefinitionHelpers.define_attribute(@graph_type, @base_model_type, @model_type, @path, name, @object_to_model, options)
+      def attr(name, **options, &block)
+        DefinitionHelpers.define_attribute(@graph_type, @base_model_type, @model_type, @path, name, @object_to_model, options, &block)
       end
 
       def proxy_to(association, &block)

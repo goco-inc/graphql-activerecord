@@ -66,10 +66,10 @@ module GraphQL
           DefinitionHelpers.define_proxy(graph_type, resolve_model_type(graph_type), resolve_model_type(graph_type), [], association, object_to_model, &block)
         end
 
-        def attr(graph_type, name, **options)
+        def attr(graph_type, name, **options, &block)
           ensure_has_model_type(graph_type, __method__)
           object_to_model = graph_type.instance_variable_get(:@unscoped_object_to_model) || DEFAULT_OBJECT_TO_MODEL
-          DefinitionHelpers.define_attribute(graph_type, resolve_model_type(graph_type), resolve_model_type(graph_type), [], name, object_to_model, options)
+          DefinitionHelpers.define_attribute(graph_type, resolve_model_type(graph_type), resolve_model_type(graph_type), [], name, object_to_model, options, &block)
         end
 
         def has_one(graph_type, association, **options)

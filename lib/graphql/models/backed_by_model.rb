@@ -20,8 +20,8 @@ module GraphQL
         @object_to_model
       end
 
-      def attr(name, **options)
-        DefinitionHelpers.define_attribute(graph_type, model_type, model_type, [], name, object_to_model, options)
+      def attr(name, **options, &block)
+        DefinitionHelpers.define_attribute(graph_type, model_type, model_type, [], name, object_to_model, options, &block)
       end
 
       def proxy_to(association, &block)
