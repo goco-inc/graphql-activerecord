@@ -78,6 +78,17 @@ module GraphQL::Models
           changes.push({ model_instance: child_model, action: :destroy })
         elsif child_model.nil? && !next_inputs.nil?
           child_model = model.public_send("build_#{child_map.association}")
+
+          assoc = model.association(child_map.association)
+          refl = assoc.reflection
+
+          if refl.options.include?(:as)
+            inverse_name = refl.options[:as]
+            inverse_assoc = child_model.association(inverse_name)
+            inverse_assoc.target = model
+            inverse_assoc.inversed = true
+          end
+
           changes.push({ model_instance: child_model, action: :create })
         end
 
