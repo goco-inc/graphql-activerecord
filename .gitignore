@@ -8,5 +8,4 @@ graphql-activerecord-*.gem
 /pkg/
 /spec/reports/
 /tmp/
-/bin/
 /spec/examples.txt
