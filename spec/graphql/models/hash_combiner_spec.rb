@@ -21,5 +21,20 @@ RSpec.describe GraphQL::Models::HashCombiner do
 
       expect(GraphQL::Models::HashCombiner.combine(input)).to eq output
     end
+
+    it "doesn't generate a separate group if all hashes have the same value for two keys" do
+      input = [
+        { prop_1: 'hello', prop_2: 'world', id: 1 },
+        { prop_1: 'hello', prop_2: 'world', id: 2 },
+        { prop_1: 'hello', prop_2: 'world', id: 3 },
+        { prop_1: 'hello', prop_2: 'world', id: 4 },
+      ]
+
+      output = [
+        { prop_1: 'hello', prop_2: 'world', id: [1, 2, 3, 4] }
+      ]
+
+      expect(GraphQL::Models::HashCombiner.combine(input)).to eq output
+    end
   end
 end

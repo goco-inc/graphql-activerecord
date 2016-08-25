@@ -1,6 +1,7 @@
 require 'bundler/setup'
 Bundler.setup
 
+require 'pry'
 require 'graphql/activerecord'
 
 RSpec.configure do |config|

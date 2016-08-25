@@ -1,3 +1,0 @@
-example_id                                         | status | run_time        |
--------------------------------------------------- | ------ | --------------- |
-./spec/graphql/models/hash_combiner_spec.rb[1:1:1] | failed | 0.02557 seconds |
