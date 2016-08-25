@@ -1,4 +1,8 @@
+require 'active_support'
+require 'active_record'
 require 'graphql'
+require 'graphql/batch'
+require 'graphql/relay'
 
 require 'graphql/models/monkey_patches/graphql_query_context'
 require 'graphql/models/monkey_patches/graphql_schema_middleware_chain'
@@ -6,6 +10,7 @@ require 'graphql/models/active_record_extension'
 require 'graphql/models/middleware'
 
 # Helpers
+require 'graphql/models/hash_combiner'
 require 'graphql/models/definer'
 require 'graphql/models/association_load_request'
 require 'graphql/models/loader'
