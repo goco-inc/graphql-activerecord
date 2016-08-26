@@ -13,7 +13,7 @@ require 'graphql/models/middleware'
 require 'graphql/models/hash_combiner'
 require 'graphql/models/definer'
 require 'graphql/models/association_load_request'
-require 'graphql/models/loader'
+require 'graphql/models/relation_loader'
 
 # Order matters...
 require 'graphql/models/promise_relation_connection'
