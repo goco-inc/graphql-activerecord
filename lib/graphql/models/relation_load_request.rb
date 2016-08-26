@@ -42,9 +42,9 @@ module GraphQL
       end
 
       private
-      
+
       def loader
-        @loader ||= Loader.for(target_class)
+        @loader ||= RelationLoader.for(target_class)
       end
 
     end

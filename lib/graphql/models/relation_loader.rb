@@ -1,6 +1,6 @@
 module GraphQL
   module Models
-    class Loader < GraphQL::Batch::Loader
+    class RelationLoader < GraphQL::Batch::Loader
       attr_reader :model_class
 
       def initialize(model_class)

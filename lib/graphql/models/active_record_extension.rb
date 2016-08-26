@@ -20,7 +20,7 @@ module GraphQL
         def_delegators :@hash, :[]=, :include?, :keys
       end
 
-      extend ActiveSupport::Concern
+      extend ::ActiveSupport::Concern
       class_methods do
         def graphql_enum_types
           @_graphql_enum_types ||= EnumTypeHash.new
@@ -64,4 +64,4 @@ module GraphQL
   end
 end
 
-ActiveRecord::Base.send(:include, GraphQL::Models::ActiveRecordExtension)
+::ActiveRecord::Base.send(:include, GraphQL::Models::ActiveRecordExtension)
