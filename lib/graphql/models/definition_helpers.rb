@@ -24,8 +24,30 @@ module GraphQL
           association = current_model.association(path[0])
         end
 
-        request = AssociationLoadRequest.new(current_model, path[0], context)
-        request.load.then do |next_model|
+        # If this is a has_many :through, then we need to load the two associations in sequence
+        # (eg: Company has_many :health_lines, through: :open_enrollments => load open enrollments, then health lines)
+
+        promise = if association.reflection.options[:through]
+          # First step, load the :through association (ie, the :open_enrollments)
+          through = association.reflection.options[:through]
+          load_and_traverse(current_model, [through], context).then do |intermediate_models|
+
+            # Now, for each of the intermediate models (OpenEnrollment), load the source association (:health_line)
+            sources = intermediate_models.map do |im|
+              load_and_traverse(im, [association.reflection.source_reflection_name], context)
+            end
+
+            # Once all of the eventual models are loaded, flatten the results
+            Promise.all(sources).then do |result|
+              result = result.flatten
+              Helpers.load_association_with(association, result)
+            end
+          end
+        else
+          AssociationLoadRequest.new(current_model, path[0], context).load
+        end
+
+        promise.then do |next_model|
           next next_model if next_model.blank?
           cache_model(context, next_model)
 

@@ -7,68 +7,25 @@ module GraphQL
         @base_model = base_model
         @association = base_model.association(association_name)
         @context = context
-      end
 
-      ####################################################################
-      # Public members that all load requests should implement
-      ####################################################################
-
-      def load_type
-        case reflection.macro
-        when :belongs_to
-          :id
-        else
-          :relation
+        if reflection.is_a?(ActiveRecord::Reflection::ThroughReflection)
+          fail ArgumentError, "You cannot batch-load a has_many :through association. Instead, load each association individually."
         end
       end
 
-      def load_target
-        case reflection.macro
-        when :belongs_to
-          base_model.send(reflection.foreign_key)
-        when :has_many
-          base_model.send(association.reflection.name)
-        else
-          # has_one, need to construct our own relation, because accessing the relation will load the model
-          condition = { reflection.foreign_key => base_model.id }
-
-          if reflection.options.include?(:as)
-            condition[reflection.type] = base_model.class.name
-          end
-
-          target_class.where(condition)
-        end
-      end
-
-      # If the value should be an array, make sure it's an array. If it should be a single value, make sure it's single.
-      # Passed in result could be a single model or an array of models.
-      def ensure_cardinality(result)
-        case reflection.macro
-        when :has_many
-          Array.wrap(result)
-        else
-          result.is_a?(Array) ? result[0] : result
-        end
-      end
-
-      # When the request is fulfilled, this method is called so that it can do whatever caching, etc. is needed
-      def fulfilled(result)
-        association.loaded!
-
-        if reflection.macro == :has_many
-          association.target.slice!(0..-1)
-          association.target.concat(result)
-          result.each do |m|
-            association.set_inverse_instance(m)
-          end
-        else
-          association.target = result
-          association.set_inverse_instance(result) if result
-        end
+      def request
+        AttributeLoader::Request.new(
+          association.scope.where_values_hash,
+          Helpers.orders_to_sql(association.scope.orders)
+        )
       end
 
       def load
-        loader.load(self)
+        loader.load(request).then do |result|
+          result = result.first unless reflection.macro == :has_many
+          Helpers.load_association_with(association, result)
+          result
+        end
       end
 
       #################################################################
@@ -86,7 +43,7 @@ module GraphQL
       private
 
       def loader
-        @loader ||= Loader.for(target_class)
+        @loader ||= AttributeLoader.for(target_class)
       end
 
       def reflection
