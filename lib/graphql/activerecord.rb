@@ -51,9 +51,14 @@ module GraphQL
       GraphQL::Models::DefinitionHelpers.load_and_traverse(starting_model, path, context)
     end
 
-    def self.load_relation(relation)
-      request = RelationLoadRequest.new(relation)
-      request.load
+    def self.load_relation(relation, fast_query: false)
+      if fast_query
+        request = AttributeLoader::Request.new(relation.where_values_hash, Helpers.orders_to_sql(relation.orders))
+        AttributeLoader.for(relation.klass).load(request)
+      else
+        request = RelationLoadRequest.new(relation)
+        request.load
+      end
     end
 
     def self.field_info(graph_type, field_name)

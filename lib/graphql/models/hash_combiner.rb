@@ -10,17 +10,17 @@ module GraphQL::Models::HashCombiner
     private
 
     def combine_core(hashes, keys)
-      return [] if keys.blank?
+      return [] if keys.nil? || keys.empty?
 
       # If there's only one key in each of the hashes, then combine that into a single hash with an array
       if keys.length == 1
         values = hashes.map { |h| h[keys[0]] }
-        return [{ keys[0] => values.uniq }]
+        return [{ keys[0] => values.flatten.uniq }]
       end
 
       # Get the most commonly occuring value in the hash, and remove it from the keys.
       # Return one hash for each unique value.
-      min_key = keys.min_by { |k| hashes.map { |h| h[k] }.uniq.count }
+      min_key = keys.min_by { |k| hashes.map { |h| h[k] }.flatten.uniq.count }
       inner_keys = keys.dup
       inner_keys.delete(min_key)
 

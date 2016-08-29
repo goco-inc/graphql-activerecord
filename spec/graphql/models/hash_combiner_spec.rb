@@ -36,5 +36,18 @@ RSpec.describe GraphQL::Models::HashCombiner do
 
       expect(GraphQL::Models::HashCombiner.combine(input)).to eq output
     end
+
+    it "can combine arrays together" do
+      input = [
+        { prop_1: 'hello', prop_2: [1, 2, 3] },
+        { prop_1: 'hello', prop_2: [4, 5, 6] }
+      ]
+
+      output = [
+        { prop_1: 'hello', prop_2: [1, 2, 3, 4, 5, 6] }
+      ]
+
+      expect(GraphQL::Models::HashCombiner.combine(input)).to eq output
+    end
   end
 end
