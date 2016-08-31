@@ -202,7 +202,7 @@ module GraphQL
           object_to_base_model: object_to_model
         })
 
-        GraphQL::Relay::Define::AssignConnection.call(graph_type, camel_name, type_lambda) do
+        GraphQL::Define::AssignConnection.call(graph_type, camel_name, type_lambda) do
           resolve -> (model, args, context) do
             return nil unless model
             return GraphSupport.secure(model.public_send(association), context)
