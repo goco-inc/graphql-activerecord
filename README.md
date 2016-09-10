@@ -1,7 +1,6 @@
 # GraphQL::Models
 
-This gem is designed to help you map Active Record models to GraphQL types, both for queries and mutations. We use it
-quite a bit in production at [GoCo](https://www.goco.io). This gem assumes that you're using Rails and Relay.
+This gem is designed to help you map Active Record models to GraphQL types, both for queries and mutations, using the [`graphql`](https://github.com/rmosolgo/graphql-ruby) gem. It assumes that you're using Rails, Relay and PostgreSQL.
 
 It extends the `define` methods for GraphQL object types to provide a simple syntax for adding fields that access attributes
 on your model. It also makes it easy to "flatten" models together across associations, or to create fields that just access
@@ -289,13 +288,20 @@ This causes the gem to automatically include `priority` as an input field. Unfor
 Also, an important note is that the gem assumes that you are passing up _all_ of the associated models, and not just some of
 them. It will destroy extra models, or create missing models.
 
+### Other things that need to be documented
+- Custom scalar types
+- `object_to_model`
+
 
 ## Development
 
 TODO: Write development instructions here 😬
 
-The top priority for the gem right now is getting a full set of tests in place, and setting up continuous integration. I've
-started setting up some tests using RSpec. I need to set up a dummy Active Record schema to build out more tests.
+Current goals:
+- RSpec tests. Requires getting a dummy schema in place.
+- Clean up awkward integration points (ie, global node identification)
+- Deprecate and remove relation loader code
+- Compatibility with latest version of `graphql` gem
 
 ## Contributing
 
