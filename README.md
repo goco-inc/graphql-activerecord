@@ -160,7 +160,19 @@ the Rails `String#constantize` method to find it. This is mainly needed when you
 
 When you use the `has_one` or `has_many_array` helpers to output associations, the gem will also include a field that only
 returns the global ID's of the models. To do that, it calls a method named `gid` on the model. You'll need to provide that method
-for those fields to work. We do that by defining it in a concern that we include into `ActiveRecord::Base`.
+for those fields to work. We do that by defining it in a concern that we include into `ActiveRecord::Base`:
+
+```ruby
+module ActiveRecordExtensions
+  extend ActiveSupport::Concern
+
+  def gid
+    NodeHelpers.encode_id(self.class.name, self.id)
+  end
+end
+
+ActiveRecord::Base.send(:include, ActiveRecordExtensions)
+```
 
 ## Usage
 
