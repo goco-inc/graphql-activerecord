@@ -190,7 +190,7 @@ end
 # You can access the auto-built type if you need to:
 MyModel.graphql_enum_types[:status]
 
-# When you use the inside of your GraphQL schema, it'll know to use the GraphQL enum type:
+# When you use it inside of your GraphQL schema, it'll know to use the GraphQL enum type:
 MyModelGraph = GraphQL::ObjectType.define do
   backed_by_model :my_model do
     attr :status
@@ -212,7 +212,8 @@ There are three helpers that you can use to build fields for associated models:
 
 ### Fields inside of `proxy_to` blocks
 You can also define ordinary fields inside of `proxy_to` blocks. When you do that, your field will receive the associated model
-as the object, instead of the original model:
+as the object, instead of the original model. This is meant to allow you to take advantage of the optimized association loading
+that the gem provides:
 
 ```ruby
 backed_by_model :employee do
@@ -235,12 +236,12 @@ mutator_definition = GraphQL::Models.define_mutator(self, Employee, null_behavio
 ```
 
 The parameters are:
-- The definer object, it needs this to that it can create the `input_fields`. You should always pass `self` for this parameter.
-- The model class that the mutator is changing. It needs this so that it can map attributes to the correct input types.
-- `null_behavior` - This lets you choose how null values are treated; it's explained below.
+- The definer object: it needs this so that it can create the input fields. You should always pass `self` for this parameter.
+- The model class that the mutator is changing: it needs this so that it can map attributes to the correct input types.
+- `null_behavior`: this lets you choose how null values are treated. It's explained below.
 
-In your mutator, you can specify attributes that don't exist as columns on your model, and they'll still be included. You just need to provide the type:
-
+#### Virtual Attributes
+In your mutator, you can specify virtual attributes on your model, you just need to provide the type:
 ```ruby
 attr :some_fake_attribute, type: types.String
 ```
@@ -303,6 +304,9 @@ them. It will destroy extra models, or create missing models.
 ### Other things that need to be documented
 - Custom scalar types
 - `object_to_model`
+- Retrieving field metadata (for building an authorization middleware)
+- Validation error exceptions
+- Why all fields on query types are nullable
 
 
 ## Development
