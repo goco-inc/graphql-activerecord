@@ -44,7 +44,7 @@ module GraphQL::Models
           end
         end
 
-        changed_models.reject(&:destroyed?).each(&:reload)
+        changed_models.reject(&:destroyed?)
       end
     end
   end
