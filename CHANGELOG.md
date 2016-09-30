@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.0
+- Updated runtime dependency requirements
+
 ## 0.7.2
 
 ### Breaking Changes
