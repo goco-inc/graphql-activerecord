@@ -19,10 +19,10 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "activesupport", "~> 4.2"
-  spec.add_runtime_dependency "activerecord", "~> 4.2"
-  spec.add_runtime_dependency "graphql", "~> 0.18.4"
-  spec.add_runtime_dependency "graphql-batch", "~> 0.2.4"
+  spec.add_runtime_dependency "activesupport", ">= 4.2", '< 5'
+  spec.add_runtime_dependency "activerecord", ">= 4.2", '< 5'
+  spec.add_runtime_dependency "graphql", ">= 0.18.4"
+  spec.add_runtime_dependency "graphql-batch", ">= 0.2.4"
 
   spec.add_development_dependency "bundler", "~> 1.11"
   spec.add_development_dependency "rake", "~> 10.0"
