@@ -3,3 +3,9 @@ class GraphQL::Query::Context
     @cached_models ||= Set.new
   end
 end
+
+class GraphQL::Query::Context::FieldResolutionContext
+  def cached_models
+    @context.cached_models
+  end
+end
