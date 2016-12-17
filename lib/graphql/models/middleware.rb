@@ -5,10 +5,10 @@ class GraphQL::Models::Middleware
     @skip_nil_models = skip_nil_models
   end
 
-  def call(graphql_type, object, field_definition, args, context, next_middleware)
+  def call(graphql_type, object, field_definition, args, context)
     # If this field defines a path, load the associations in the path
     field_info = GraphQL::Models.field_info(graphql_type, field_definition.name)
-    return next_middleware.call unless field_info
+    return yield unless field_info
 
     # Convert the core object into the model
     base_model = field_info.object_to_base_model.call(object)
@@ -17,7 +17,7 @@ class GraphQL::Models::Middleware
       next nil if model.nil? && @skip_nil_models
 
       next_args = [graphql_type, model, field_definition, args, context]
-      next_middleware.call(next_args)
+      yield(next_args)
     end
   end
 end
