@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "activesupport", ">= 4.2", '< 5'
   spec.add_runtime_dependency "activerecord", ">= 4.2", '< 5'
-  spec.add_runtime_dependency "graphql", ">= 1.2.1", '< 2'
+  spec.add_runtime_dependency "graphql", ">= 1.4", '< 2'
   spec.add_runtime_dependency "graphql-batch", ">= 0.2.4"
 
   spec.add_development_dependency "bundler", "~> 1.11"
