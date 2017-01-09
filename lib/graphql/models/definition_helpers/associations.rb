@@ -205,7 +205,9 @@ module GraphQL
         GraphQL::Define::AssignConnection.call(graph_type, camel_name, type_lambda) do
           resolve -> (model, args, context) do
             return nil unless model
-            return GraphSupport.secure(model.public_send(association), context)
+
+            # TODO: Figure out a way to remove this from the gem. It's only applicable to GoCo's codebase.
+            GraphSupport.secure(model.public_send(association), context, permission: options[:permission] || :read)
           end
         end
       end
