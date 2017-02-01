@@ -1,7 +1,7 @@
 module GraphQL
   module Models
     module DefinitionHelpers
-      def self.define_proxy(graph_type, base_model_type, model_type, path, association, object_to_model, &block)
+      def self.define_proxy(graph_type, base_model_type, model_type, path, association, object_to_model, detect_nulls, &block)
         reflection = model_type.reflect_on_association(association)
         raise ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
         raise ArgumentError.new("Cannot proxy to polymorphic association #{association} on model #{model_type.name}") if reflection.polymorphic?
@@ -9,7 +9,15 @@ module GraphQL
 
         return unless block_given?
 
-        proxy = BackedByModel.new(graph_type, reflection.klass, base_model_type: base_model_type, path: [*path, association], object_to_model: object_to_model)
+        proxy = BackedByModel.new(
+          graph_type,
+          reflection.klass,
+          base_model_type: base_model_type,
+          path: [*path, association],
+          object_to_model: object_to_model,
+          detect_nulls: detect_nulls && Reflection.is_required(model_type, association)
+        )
+
         proxy.instance_exec(&block)
       end
 
@@ -18,36 +26,32 @@ module GraphQL
         ## Ordinary has_one/belongs_to associations
         ############################################
 
-        return -> { "#{reflection.klass.name}Graph".constantize } if !reflection.polymorphic?
+        if reflection.polymorphic?
+          # For polymorphic associations, we look for a validator that limits the types of entities that could be
+          # used, and use it to build a union. If we can't find one, raise an error.
 
-        ############################################
-        ## Polymorphic associations
-        ############################################
+          model_type = reflection.active_record
+          valid_types = Reflection.possible_values(model_type, reflection.foreign_type)
 
-        # For polymorphic associations, we look for a validator that limits the types of entities that could be
-        # used, and use it to build a union. If we can't find one, raise an error.
+          if valid_types.blank?
+            fail ArgumentError.new("Cannot include polymorphic #{reflection.name} association on model #{model_type.name}, because it does not define an inclusion validator on #{reflection.foreign_type}")
+          end
 
-        model_type = reflection.active_record
-        valid_types = Reflection.possible_values(model_type, reflection.foreign_type)
-
-        if valid_types.blank?
-          fail ArgumentError.new("Cannot include polymorphic #{reflection.name} association on model #{model_type.name}, because it does not define an inclusion validator on #{reflection.foreign_type}")
-        end
-
-        return ->() do
-          graph_types = valid_types.map { |t| "#{t}Graph".safe_constantize }.compact
+          graph_types = valid_types.map { |t| GraphQL::Models.get_graphql_type(t) }.compact
 
           GraphQL::UnionType.define do
             name "#{model_type.name}#{reflection.foreign_type.classify}"
             description "Objects that can be used as #{reflection.foreign_type.titleize.downcase} on #{model_type.name.titleize.downcase}"
             possible_types graph_types
           end
+        else
+          GraphQL::Models.get_graphql_type!(reflection.klass)
         end
       end
 
       # Adds a field to the graph type which is resolved by accessing a has_one association on the model. Traverses
       # across has_one associations specified in the path. The resolver returns a promise.
-      def self.define_has_one(graph_type, base_model_type, model_type, path, association, object_to_model, options)
+      def self.define_has_one(graph_type, base_model_type, model_type, path, association, object_to_model, options, detect_nulls)
         reflection = model_type.reflect_on_association(association)
 
         fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
@@ -55,10 +59,9 @@ module GraphQL
 
         # Define the field for the association itself
 
-        camel_name = options[:name] || association.to_s.camelize(:lower)
-        camel_name = camel_name.to_sym if camel_name.is_a?(String)
-
-        type_lambda = resolve_has_one_type(reflection)
+        camel_name = options[:name]
+        association_graphql_type = resolve_has_one_type(reflection)
+        association_graphql_type = resolve_nullability(association_graphql_type, model_type, association, detect_nulls, options)
 
         DefinitionHelpers.register_field_metadata(graph_type, camel_name, {
           macro: :has_one,
@@ -72,7 +75,7 @@ module GraphQL
 
         graph_type.fields[camel_name.to_s] = GraphQL::Field.define do
           name camel_name.to_s
-          type type_lambda
+          type association_graphql_type
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
@@ -84,6 +87,7 @@ module GraphQL
 
         # Define the field for the associated model's ID
         id_field_name = :"#{camel_name}Id"
+        id_field_type = resolve_nullability(GraphQL::ID_TYPE, model_type, association, detect_nulls, options)
 
         DefinitionHelpers.register_field_metadata(graph_type, id_field_name, {
           macro: :has_one,
@@ -103,7 +107,7 @@ module GraphQL
 
         graph_type.fields[id_field_name.to_s] = GraphQL::Field.define do
           name id_field_name.to_s
-          type types.ID
+          type id_field_type
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
           resolve -> (model, args, context) do
@@ -129,8 +133,15 @@ module GraphQL
         fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
         fail ArgumentError.new("Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_many_array") unless [:has_many].include?(reflection.macro)
 
-        type_lambda = options[:type] || -> { types[!"#{reflection.klass.name}Graph".constantize] }
-        camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
+        association_type = options[:type] || GraphQL::Models.get_graphql_type!(reflection.klass)
+
+        if !association_type.is_a?(GraphQL::ListType)
+          association_type = association_type.to_non_null_type.to_list_type
+        end
+
+        association_type = resolve_nullability(association_type, model_type, association, false, options)
+
+        camel_name = options[:name]
 
         DefinitionHelpers.register_field_metadata(graph_type, camel_name, {
           macro: :has_many_array,
@@ -144,7 +155,7 @@ module GraphQL
 
         graph_type.fields[camel_name.to_s] = GraphQL::Field.define do
           name camel_name.to_s
-          type type_lambda
+          type association_type
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
@@ -158,6 +169,7 @@ module GraphQL
 
         # Define the field for the associated model's ID
         id_field_name = :"#{camel_name.to_s.singularize}Ids"
+        id_field_type = resolve_nullability(GraphQL::ID_TYPE.to_non_null_type.to_list_type, model_type, association, false, options)
 
         DefinitionHelpers.register_field_metadata(graph_type, id_field_name, {
           macro: :has_one,
@@ -171,7 +183,7 @@ module GraphQL
 
         graph_type.fields[id_field_name.to_s] = GraphQL::Field.define do
           name id_field_name.to_s
-          type types[!types.ID]
+          type id_field_type
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
           resolve -> (model, args, context) do
@@ -189,8 +201,10 @@ module GraphQL
         fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
         fail ArgumentError.new("Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_many_connection") unless [:has_many].include?(reflection.macro)
 
-        type_lambda = -> { "#{reflection.klass.name}Graph".constantize.connection_type }
-        camel_name = options[:name] || association.to_s.camelize(:lower).to_sym
+        connection_type = GraphQL::Models.get_graphql_type!(reflection.klass).connection_type
+        connection_type = resolve_nullability(connection_type, model_type, association, false, options)
+
+        camel_name = options[:name]
 
         DefinitionHelpers.register_field_metadata(graph_type, camel_name, {
           macro: :has_many_connection,
@@ -202,12 +216,20 @@ module GraphQL
           object_to_base_model: object_to_model
         })
 
-        GraphQL::Define::AssignConnection.call(graph_type, camel_name, type_lambda) do
-          resolve -> (model, args, context) do
-            return nil unless model
-
-            # TODO: Figure out a way to remove this from the gem. It's only applicable to GoCo's codebase.
-            GraphSupport.secure(model.public_send(association), context, permission: options[:permission] || :read)
+        # TODO: Figure out a way to remove this from the gem. It's only applicable to GoCo's codebase.
+        if Object.const_defined?('GraphSupport') && GraphSupport.respond_to?(:secure)
+          GraphQL::Define::AssignConnection.call(graph_type, camel_name, connection_type) do
+            resolve -> (model, args, context) do
+              return nil unless model
+              GraphSupport.secure(model.public_send(association), context, permission: options[:permission] || :read)
+            end
+          end
+        else
+          GraphQL::Define::AssignConnection.call(graph_type, camel_name, connection_type) do
+            resolve -> (model, args, context) do
+              return nil unless model
+              model.public_send(association)
+            end
           end
         end
       end
