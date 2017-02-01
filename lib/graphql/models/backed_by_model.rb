@@ -6,6 +6,9 @@ module GraphQL
       DEFAULT_OBJECT_TO_MODEL = -> (obj) { obj }
 
       def initialize(graph_type, model_type, base_model_type: model_type, path: [], object_to_model: DEFAULT_OBJECT_TO_MODEL)
+        model_type = model_type.to_s.classify.constantize unless model_type.is_a?(Class)
+        base_model_type = base_model_type.to_s.classify.constantize unless model_type.is_a?(Class)
+
         @graph_type = graph_type
         @model_type = model_type
         @object_to_model = object_to_model
@@ -22,8 +25,8 @@ module GraphQL
         @object_to_model
       end
 
-      def attr(name, **options, &block)
-        DefinitionHelpers.define_attribute(graph_type, base_model_type, model_type, path, name, object_to_model, options, &block)
+      def attr(attribute, **options, &block)
+        DefinitionHelpers.define_attribute(graph_type, base_model_type, model_type, path, attribute, object_to_model, options, &block)
       end
 
       def proxy_to(association, &block)
@@ -48,9 +51,9 @@ module GraphQL
         DefinitionHelpers.register_field_metadata(graph_type, defined_field.name, {
           macro: :field,
           macro_type: :custom,
-          path: [],
-          base_model_type: @model_type.to_s.classify.constantize,
-          model_type: @model_type.to_s.classify.constantize,
+          path: path,
+          base_model_type: base_model_type,
+          model_type: model_type,
           object_to_base_model: object_to_model
         })
 

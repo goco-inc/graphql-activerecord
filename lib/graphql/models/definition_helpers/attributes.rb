@@ -1,6 +1,8 @@
 module GraphQL
   module Models
     module DefinitionHelpers
+      ColumnDefinition = Struct.new(:is_range, :camel_name, :graphql_type, :nullable)
+
       def self.type_to_graphql_type(type)
         registered_type = ScalarTypes.registered_type(type)
         if registered_type
@@ -39,12 +41,12 @@ module GraphQL
           graphql_type = types[graphql_type]
         end
 
-        return OpenStruct.new({
-          is_range: /range\z/ === col.type.to_s,
-          camel_name: name.to_s.camelize(:lower).to_sym,
-          graphql_type: graphql_type,
-          nullable: col.null
-        })
+        ColumnDefinition.new(
+          /range\z/ === col.type.to_s,
+          name.to_s.camelize(:lower).to_sym,
+          graphql_type,
+          col.null
+        )
       end
 
       def self.get_column!(model_type, name)
@@ -55,12 +57,7 @@ module GraphQL
 
       def self.range_to_graphql(value)
         return nil unless value
-
-        begin
-          [value.first, value.last_included]
-        rescue TypeError
-          [value.first, value.last]
-        end
+        [value.min, value.max]
       end
 
       # Adds a field to the graph type which is resolved by accessing an attribute on the model. Traverses
@@ -98,7 +95,7 @@ module GraphQL
               model.public_send(attribute)
             end
           end
-          
+
           instance_exec(&block) if block
         end
       end
