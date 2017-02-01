@@ -30,16 +30,14 @@ require 'graphql/models/mutation_helpers/validation_error'
 require 'graphql/models/mutation_helpers/validation'
 require 'graphql/models/mutation_field_map'
 
-require 'graphql/models/proxy_block'
 require 'graphql/models/backed_by_model'
-require 'graphql/models/object_type'
 require 'graphql/models/mutator'
 
 
 module GraphQL
   module Models
     class << self
-      attr_accessor :node_interface_proc, :model_from_id, :authorize, :id_for_model
+      attr_accessor :on_model_type, :model_from_id, :authorize, :id_for_model
     end
 
     # Returns a promise that will traverse the associations and resolve to the model at the end of the path.
@@ -84,3 +82,12 @@ module GraphQL
     end
   end
 end
+
+GraphQL::ObjectType.accepts_definitions(
+  backed_by_model: -> (graph_type, model_type, &block) do
+    model_type = model_type.to_s.classify.constantize unless model_type.is_a?(Class)
+
+    backer = GraphQL::Models::BackedByModel.new(graph_type, model_type)
+    backer.instance_exec(&block)
+  end
+)

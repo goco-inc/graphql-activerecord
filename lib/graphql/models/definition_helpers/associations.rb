@@ -9,7 +9,7 @@ module GraphQL
 
         return unless block_given?
 
-        proxy = ProxyBlock.new(graph_type, base_model_type, reflection.klass, [*path, association], object_to_model)
+        proxy = BackedByModel.new(graph_type, reflection.klass, base_model_type: base_model_type, path: [*path, association], object_to_model: object_to_model)
         proxy.instance_exec(&block)
       end
 
