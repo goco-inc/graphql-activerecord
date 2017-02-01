@@ -28,7 +28,7 @@ module GraphQL
         # used, and use it to build a union. If we can't find one, raise an error.
 
         model_type = reflection.active_record
-        valid_types = detect_inclusion_values(model_type, reflection.foreign_type)
+        valid_types = Reflection.possible_values(model_type, reflection.foreign_type)
 
         if valid_types.blank?
           fail ArgumentError.new("Cannot include polymorphic #{reflection.name} association on model #{model_type.name}, because it does not define an inclusion validator on #{reflection.foreign_type}")

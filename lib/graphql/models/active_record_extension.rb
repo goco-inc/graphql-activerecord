@@ -41,7 +41,7 @@ module GraphQL
           if defined_enums.include?(attribute.to_s)
             values = defined_enums[attribute.to_s].keys
           else
-            values = DefinitionHelpers.detect_inclusion_values(self, attribute)
+            values = Reflection.possible_values(self, attribute)
           end
 
           if values.nil?

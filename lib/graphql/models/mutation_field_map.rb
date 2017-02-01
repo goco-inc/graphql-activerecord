@@ -46,7 +46,7 @@ module GraphQL::Models
             end
           end
 
-          required = DefinitionHelpers.detect_is_required(model_type, attribute)
+          required = Reflection.is_required(model_type, attribute)
         end
       end
 
@@ -118,7 +118,7 @@ module GraphQL::Models
       end
 
       has_many = reflection.macro == :has_many
-      required = DefinitionHelpers.detect_is_required(model_type, association)
+      required = Reflection.is_required(model_type, association)
 
       map = MutationFieldMap.new(reflection.klass, find_by: find_by, null_behavior: null_behavior)
       map.name = name || association.to_s.camelize(:lower)

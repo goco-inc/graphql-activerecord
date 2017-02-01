@@ -117,32 +117,6 @@ module GraphQL
         return model
       end
 
-      # Detects the values that are valid for an attribute by looking at the inclusion validators
-      def self.detect_inclusion_values(model_type, attribute)
-        # Get all of the inclusion validators
-        validators = model_type.validators_on(attribute).select { |v| v.is_a?(ActiveModel::Validations::InclusionValidator) }
-
-        # Ignore any inclusion validators that are using the 'if' or 'unless' options
-        validators = validators.reject { |v| v.options.include?(:if) || v.options.include?(:unless) || v.options[:in].blank? }
-        return nil unless validators.any?
-        return validators.map { |v| v.options[:in] }.reduce(:&)
-      end
-
-      def self.detect_is_required(model_type, attr_or_assoc)
-        col = model_type.columns.detect { |c| c.name == attr_or_assoc.to_s }
-        return true if col && !col.null
-
-        validators = model_type.validators_on(attr_or_assoc)
-          .select { |v| v.is_a?(ActiveModel::Validations::PresenceValidator) }
-          .reject { |v| v.options.include?(:if) || v.options.include?(:unless) }
-
-        return true if validators.any?
-
-        # The column is nullable, and there are no unconditional presence validators,
-        # so it's at least sometimes optional
-        false
-      end
-
       # Stores metadata about GraphQL fields that are available on this model's GraphQL type.
       # @param metadata Should be a hash that contains information about the field's definition, including :macro and :type
       def self.register_field_metadata(graph_type, field_name, metadata)
