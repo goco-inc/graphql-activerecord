@@ -9,7 +9,7 @@ module GraphQL
         nullable = options[:nullable]
 
         if nullable == nil
-          nullable = detect_nulls && Reflection.is_required(model_class, attribute_or_association)
+          nullable = !(detect_nulls && Reflection.is_required(model_class, attribute_or_association))
         end
 
         if nullable == false
