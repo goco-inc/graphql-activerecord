@@ -79,7 +79,7 @@ module GraphQL
           deprecation_reason: deprecation_reason
         })
 
-        DefinitionHelpers.define_has_many_connection(@graph_type, @base_model_type, @model_type, @path, association, @object_to_model, options)
+        DefinitionHelpers.define_has_many_connection(@graph_type, @base_model_type, @model_type, @path, association, @object_to_model, options, @detect_nulls)
       end
 
       def has_many_array(association, name: association.to_s.camelize(:lower), nullable: nil, description: nil, deprecation_reason: nil, type: nil)
@@ -93,7 +93,7 @@ module GraphQL
           deprecation_reason: deprecation_reason
         }
 
-        DefinitionHelpers.define_has_many_array(@graph_type, @base_model_type, @model_type, @path, association, @object_to_model, options)
+        DefinitionHelpers.define_has_many_array(@graph_type, @base_model_type, @model_type, @path, association, @object_to_model, options, @detect_nulls)
       end
 
       def field(*args, &block)

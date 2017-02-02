@@ -127,7 +127,7 @@ module GraphQL
         end
       end
 
-      def self.define_has_many_array(graph_type, base_model_type, model_type, path, association, object_to_model, options)
+      def self.define_has_many_array(graph_type, base_model_type, model_type, path, association, object_to_model, options, detect_nulls)
         reflection = model_type.reflect_on_association(association)
 
         fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
@@ -139,7 +139,15 @@ module GraphQL
           association_type = association_type.to_non_null_type.to_list_type
         end
 
-        association_type = resolve_nullability(association_type, model_type, association, false, options)
+        id_field_type = GraphQL::ID_TYPE.to_non_null_type.to_list_type
+
+        # The has_many associations are a little special. Instead of checking for a presence validator, we instead assume
+        # that the outer type should be non-null, unless detect_nulls is false. In other words, we prefer an empty
+        # array for the association, rather than null.
+        if (options[:nullable] == nil && detect_nulls) || options[:nullable] == false
+          association_type = association_type.to_non_null_type
+          id_field_type = id_field_type.to_non_null_type
+        end
 
         camel_name = options[:name]
 
@@ -169,7 +177,6 @@ module GraphQL
 
         # Define the field for the associated model's ID
         id_field_name = :"#{camel_name.to_s.singularize}Ids"
-        id_field_type = resolve_nullability(GraphQL::ID_TYPE.to_non_null_type.to_list_type, model_type, association, false, options)
 
         DefinitionHelpers.register_field_metadata(graph_type, id_field_name, {
           macro: :has_one,
@@ -195,14 +202,17 @@ module GraphQL
         end
       end
 
-      def self.define_has_many_connection(graph_type, base_model_type, model_type, path, association, object_to_model, options)
+      def self.define_has_many_connection(graph_type, base_model_type, model_type, path, association, object_to_model, options, detect_nulls)
         reflection = model_type.reflect_on_association(association)
 
         fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
         fail ArgumentError.new("Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_many_connection") unless [:has_many].include?(reflection.macro)
 
         connection_type = GraphQL::Models.get_graphql_type!(reflection.klass).connection_type
-        connection_type = resolve_nullability(connection_type, model_type, association, false, options)
+
+        if (options[:nullable] == nil && detect_nulls) || options[:nullable] == false
+          connection_type = connection_type.to_non_null_type
+        end
 
         camel_name = options[:name]
 
