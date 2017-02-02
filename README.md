@@ -1,13 +1,13 @@
 # GraphQL::Models
 
-This gem is designed to help you map Active Record models to GraphQL types, both for queries and mutations, using the [`graphql`](https://github.com/rmosolgo/graphql-ruby) gem. It assumes that you're using Rails, Relay and PostgreSQL.
+This gem is designed to help you map Active Record models to GraphQL types, both for queries and mutations, using the [`graphql`](https://github.com/rmosolgo/graphql-ruby)
+gem. It assumes that you're using Rails and have `graphql-batch` set up.
 
 It extends the `define` methods for GraphQL object types to provide a simple syntax for adding fields that access attributes
 on your model. It also makes it easy to "flatten" models together across associations, or to create fields that just access
 the association as a separate object type.
 
-In the process, this gem also converts `snake_case` attribute names into `camelCase` field names. When you go to build a mutation
-using this gem, it knows how to revert that process, even in cases where the conversion isn't symmetric.
+In the process, this gem also converts `snake_case` attribute names into `camelCase` field names. When you go to build a mutation using this gem, it knows how to revert that process, even in cases where the conversion isn't symmetric.
 
 Here's an example:
 ```ruby
@@ -129,19 +129,23 @@ GraphQL::Models.authorize = -> (context, action, model) {
   user = context['user']
   model.authorize_changes!(action, user)
 }
+
+# The gem assumes that if your model is called `MyModel`, the corresponding type is `MyModelType`.
+# You can override that convention. Return `nil` if the model doesn't have a GraphQL type:
+GraphQL::Models.model_to_graphql_type -> (model_class) { "#{model_class.name}Graph".safe_constantize }
 ```
 
 Finally, you need to set a few options on your schema:
 ```ruby
-Schema.query_execution_strategy = GraphQL::Batch::ExecutionStrategy
-Schema.mutation_execution_strategy = GraphQL::Batch::MutationExecutionStrategy
-Schema.middleware << GraphQL::Models::Middleware.new
+GraphQL::Schema.define do
+  # Set up the graphql-batch gem
+  lazy_resolve(Promise, :sync)
+  instrument(:query, GraphQL::Batch::Setup)
+
+  # This middleware should be somewhere near the top of your middleware chain
+  middleware GraphQL::Models::Middleware.new
+end
 ```
-
-## Other notes
-
-The code in this gem was originally part of our main codebase, before we extracted it. So there are a few places where some of
-of our own conventions leak through. Eventually, I'd like to clean these up, but you'll have to live with them for now.
 
 ### Database compatibility
 
@@ -149,32 +153,131 @@ This gem uses `graphql-batch` to optimize loading associated models in your grap
 queries. It tries to do that in a way that preserves things like scopes that change the order or filter the rows retrieved.
 
 Unfortunately, that means that it needs to build some custom SQL expressions, and they might not be compatible with every
-database engine. They should work correctly on PostgreSQL.
-
-### Naming of GraphQL types
-
-If your model is named `Something`, this gem assumes that the corresponding object type is called `SomethingGraph`, and it uses
-the Rails `String#constantize` method to find it. This is mainly needed when you're specifying associations on your object types.
+database engine. They should work correctly on PostgreSQL. For other databases, your mileage may vary.
 
 ### Global ID's
 
 When you use the `has_one` or `has_many_array` helpers to output associations, the gem will also include a field that only
-returns the global ID's of the models. To do that, it calls a method named `gid` on the model. You'll need to provide that method
-for those fields to work. We do that by defining it in a concern that we include into `ActiveRecord::Base`:
+returns the global ID's of the models. To do that, it calls a method named `gid` on the model. You'll need to provide that method for those fields to work. We do that by adding it to our `ApplicationRecord` base class:
 
 ```ruby
-module ActiveRecordExtensions
-  extend ActiveSupport::Concern
-
+class ApplicationRecord < ActiveRecord::Base
   def gid
-    NodeHelpers.encode_id(self.class.name, self.id)
+    # add code to return a global object ID here
   end
 end
-
-ActiveRecord::Base.send(:include, ActiveRecordExtensions)
 ```
 
 ## Usage
+
+Inside of your GraphQL object types, you use `backed_by_model` to create fields that are tied to your models (see
+example above). Inside of those blocks, you have some helper methods.
+
+### Attribute helpers
+
+You use the `attr` method to add an ordinary attribute from your model to your schema:
+```ruby
+backed_by_model :employee do
+  attr :first_name
+  attr :last_name
+end
+```
+
+The gem knows how to handle basic attribute types: boolean, int, float, and string. For other types, you need
+to tell it what GraphQL type to use:
+
+```ruby
+# config/initializers/graphql_activerecord.rb
+GraphQL::Models::DatabaseTypes.register(:decimal, DecimalType)
+
+# You can wrap the type in a proc, or use a string, so that you don't break code reloading:
+GraphQL::Models::DatabaseTypes.register(:decimal, -> { DecimalType })
+GraphQL::Models::DatabaseTypes.register(:decimal, "DecimalType")
+
+# If you're not using a scalar, you need to give it separate input/output types:
+GraphQL::Models::DatabaseTypes.register(:date, DateType, DateInputType)
+```
+
+#### Nullability of attributes
+The gem will mark a field as non-nullable if:
+- the database column is non-null
+- the attribute has an unconditional presence validator on it
+
+There are two ways you can override this behavior:
+- You can pass either `nullable: true` or `nullable: false` to the helper, and no automatic detection happens
+- You can disable null detection for the entire `backed_by_model` block
+
+Example:
+```ruby
+backed_by_model :employee do
+  # All fields created by the gem will be nullable
+  detect_nulls false
+
+  # Override it on a per-field basis
+  attr :first_name, nullable: false
+end
+```
+
+If you use a `proxy_to` block, the gem will automatically detect whether the associated model
+has a presence validator on it. If it doesn’t, all fields inside of the block are nullable:
+
+```ruby
+backed_by_model :employee do
+
+  # If you have `validates :person, presence: true` in your model, then nullability
+  # on these fields is preserved. Otherwise, they will all be nullable.
+  proxy_to :person do
+    attr :birthday
+  end
+end
+```
+
+### Association helpers
+There are three helpers that you can use to build fields for associated models:
+
+- `has_one` can be used for either `belongs_to` or `has_one` associations
+- `has_many_array` will return all of the associated models as a GraphQL list
+- `has_many_connection` will return a paged connection of the associated models
+
+#### Nullability of associations
+When you use the `has_one` helper, the gem follows the same rules for nullability as it does for attributes. Thus,
+it’ll check for a presence validator on the association itself:
+
+```ruby
+class MyModel < ApplicationRecord
+  belongs_to :some_other_model
+  validates :some_other_model, presence: true
+end
+```
+
+In addition, for `belongs_to` models, it’ll check the nullability of the foreign key:
+```ruby
+class MyModel < ApplicationRecord
+  belongs_to :some_other_model
+  validates :some_other_model_id, presence: true
+end
+```
+
+For `has_many` associations, it does not check for presence validators; rather, it assumes that an empty array
+will be returned if there are no associated models, so the field is always marked non-null (but subject to the same rules
+as attributes regarding proxy blocks).
+
+### Fields inside of `proxy_to` blocks
+You can also define ordinary fields inside of `proxy_to` blocks. When you do that, your field will receive the associated model
+as the object, instead of the original model. This is meant to allow you to take advantage of the optimized association loading
+that the gem provides:
+
+```ruby
+backed_by_model :employee do
+  proxy_to :person do
+    field :someCustomField, types.Int do
+      resolve -> (model, args, context) {
+        # model is an instance of Person, not Employee
+      }
+    end
+  end
+end
+```
 
 ### GraphQL Enum's
 
@@ -182,7 +285,7 @@ Active Record allows you to define enum fields on your models. They're stored as
 You can use a helper to automatically build GraphQL enum types for them:
 
 ```ruby
-class MyModel < ActiveRecord::Base
+class MyModel < ApplicationRecord
   enum status: [:active, :inactive]
   graphql_enum :status
 end
@@ -201,30 +304,6 @@ end
 You can also manually specify the type to use, if you just want the type mapping behavior:
 ```ruby
   graphql_enum :status, type: StatusEnum
-```
-
-### Association helpers
-There are three helpers that you can use to build fields for associated models:
-
-- `has_one` can be used for either `belongs_to` or `has_one` associations
-- `has_many_array` will return all of the associated models as a GraphQL list
-- `has_many_connection` will return a paged connection of the associated models
-
-### Fields inside of `proxy_to` blocks
-You can also define ordinary fields inside of `proxy_to` blocks. When you do that, your field will receive the associated model
-as the object, instead of the original model. This is meant to allow you to take advantage of the optimized association loading
-that the gem provides:
-
-```ruby
-backed_by_model :employee do
-  proxy_to :person do
-    field :someCustomField, types.Int do
-      resolve -> (model, args, context) {
-        # model is an instance of Person, not Employee
-      }
-    end
-  end
-end
 ```
 
 ### Defining Mutations
@@ -306,7 +385,6 @@ them. It will destroy extra models, or create missing models.
 - `object_to_model`
 - Retrieving field metadata (for building an authorization middleware)
 - Validation error exceptions
-- Why all fields on query types are nullable
 
 
 ## Development
