@@ -16,12 +16,20 @@ module GraphQL::Models
       # Determines if the attribute (or association) is required by examining presence validators
       # and the nullability of the column in the database
       def is_required(model_class, attr_or_assoc)
+        # Check for non-nullability on the column itself
         return true if model_class.columns_hash[attr_or_assoc.to_s]&.null == false
 
-        model_class.validators_on(attr_or_assoc)
+        # Check for a presence validator on the association
+        return true if model_class.validators_on(attr_or_assoc)
           .select { |v| v.is_a?(ActiveModel::Validations::PresenceValidator) }
           .reject { |v| v.options.include?(:if) || v.options.include?(:unless) }
           .any?
+
+        # If it's a belongs_to association, check for nullability on the foreign key
+        reflection = model_class.reflect_on_association(attr_or_assoc)
+        return true if reflection && reflection.macro == :belongs_to && is_required(model_class, reflection.foreign_key)
+
+        false
       end
 
       # Returns a struct that tells you the input and output GraphQL types for an attribute
