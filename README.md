@@ -31,7 +31,7 @@ EmployeeGraph = GraphQL::ObjectType.define do
 
       # You can also provide the association itself as an object field. In this example, a
       # Person has one Address. The gem assumes that the corresponding GraphQL object type
-      # is called "AddressGraph".
+      # is called "AddressType" (but you can override, see installation section below).
       has_one :address
     end
   end
