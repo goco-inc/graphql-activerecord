@@ -23,31 +23,23 @@ module GraphQL::Models
       GraphQL::Define::TypeDefiner.instance
     end
 
-    def attr(attribute, type: nil, name: nil, required: false)
+    def attr(attribute, type: nil, name: nil, required: nil)
       attribute = attribute.to_sym if attribute.is_a?(String)
 
       if type.nil? && !model_type
         fail ArgumentError.new("You must specify a type for attribute #{name}, because its model type is not known until runtime.")
       end
 
-      if model_type
-        column = DefinitionHelpers.get_column(model_type, attribute)
+      if type.nil? && (attribute == :id || foreign_keys.include?(attribute))
+        type = types.ID
+      end
 
-        if column.nil? && type.nil?
-          fail ArgumentError.new("You must specify a type for attribute #{name}, because it's not a column on #{model_type}.")
-        end
+      if type.nil? && model_type
+        type = Reflection.attribute_graphql_type(model_type, attribute).input
+      end
 
-        if column
-          type ||= begin
-            if attribute == :id || foreign_keys.include?(attribute)
-              type = types.ID
-            else
-              type = column.graphql_type
-            end
-          end
-
-          required = DefinitionHelpers.detect_is_required(model_type, attribute)
-        end
+      if required.nil?
+        required = model_type ? Reflection.is_required(model_type, attribute) : false
       end
 
       name ||= attribute.to_s.camelize(:lower)
@@ -118,7 +110,7 @@ module GraphQL::Models
       end
 
       has_many = reflection.macro == :has_many
-      required = DefinitionHelpers.detect_is_required(model_type, association)
+      required = Reflection.is_required(model_type, association)
 
       map = MutationFieldMap.new(reflection.klass, find_by: find_by, null_behavior: null_behavior)
       map.name = name || association.to_s.camelize(:lower)

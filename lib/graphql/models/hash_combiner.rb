@@ -3,7 +3,7 @@ module GraphQL::Models::HashCombiner
     # Takes a set of hashes that represent conditions, and combines them into the smallest number of hashes
     def combine(hashes)
       # Group the hashes by keys. If they are querying different columns, they can't be combined
-      by_keys = hashes.group_by { |h| h.keys }
+      by_keys = hashes.group_by { |h| h.keys.sort }
       by_keys.map { |keys, values| combine_core(values, keys) }.flatten
     end
 
