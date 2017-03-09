@@ -1,5 +1,5 @@
 module GraphQL
   module Models
-    VERSION = "0.10.0-alpha3"
+    VERSION = "0.10.0"
   end
 end
