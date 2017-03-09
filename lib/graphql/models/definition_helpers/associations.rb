@@ -226,20 +226,10 @@ module GraphQL
           object_to_base_model: object_to_model
         })
 
-        # TODO: Figure out a way to remove this from the gem. It's only applicable to GoCo's codebase.
-        if Object.const_defined?('GraphSupport') && GraphSupport.respond_to?(:secure)
-          GraphQL::Define::AssignConnection.call(graph_type, camel_name, connection_type) do
-            resolve -> (model, args, context) do
-              return nil unless model
-              GraphSupport.secure(model.public_send(association), context, permission: options[:permission] || :read)
-            end
-          end
-        else
-          GraphQL::Define::AssignConnection.call(graph_type, camel_name, connection_type) do
-            resolve -> (model, args, context) do
-              return nil unless model
-              model.public_send(association)
-            end
+        GraphQL::Define::AssignConnection.call(graph_type, camel_name, connection_type) do
+          resolve -> (model, args, context) do
+            return nil unless model
+            model.public_send(association)
           end
         end
       end
