@@ -9,10 +9,10 @@ jobs:
 
       # Install dependencies
       - restore_cache:
-          key: bundler-{{ checksum "Gemfile.lock" }}
+          key: bundler-{{ checksum "graphql-activerecord.gemspec" }}
       - run: bundle install --path=vendor/gems
       - save_cache:
-          key: bundler-{{ checksum "Gemfile.lock" }}
+          key: bundler-{{ checksum "graphql-activerecord.gemspec" }}
           paths:
             - vendor/gems
 
