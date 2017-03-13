@@ -16,5 +16,6 @@ jobs:
           paths:
             - vendor/gems
 
-      # Run rubocop
+      # Tests
       - run: rubocop
+      - run: rspec
