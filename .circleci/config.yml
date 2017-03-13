@@ -1,0 +1,20 @@
+version: 2
+jobs:
+  build:
+    working_directory: /graphql-activerecord
+    docker:
+      - image: ruby:2.3.1
+    steps:
+      - checkout
+
+      # Install dependencies
+      - restore_cache:
+          key: bundler-{{ checksum "graphql-activerecord.gemspec" }}
+      - run: bundle install --path=vendor/gems
+      - save_cache:
+          key: bundler-{{ checksum "graphql-activerecord.gemspec" }}
+          paths:
+            - vendor/gems
+
+      # Run rubocop
+      - run: rubocop
