@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Exposes utility methods for getting metadata out of active record models
 module GraphQL::Models
   module Reflection
@@ -10,7 +11,7 @@ module GraphQL::Models
         # Ignore any inclusion validators that are using the 'if' or 'unless' options
         validators = validators.reject { |v| v.options.include?(:if) || v.options.include?(:unless) || v.options[:in].blank? }
         return nil unless validators.any?
-        return validators.map { |v| v.options[:in] }.reduce(:&)
+        validators.map { |v| v.options[:in] }.reduce(:&)
       end
 
       # Determines if the attribute (or association) is required by examining presence validators
@@ -43,13 +44,13 @@ module GraphQL::Models
           active_record_type = model_class.type_for_attribute(attribute.to_s)
 
           if active_record_type.type.nil?
-            fail ArgumentError, "The type for attribute #{attribute} wasn't found on #{model_class.name}"
+            raise ArgumentError, "The type for attribute #{attribute} wasn't found on #{model_class.name}"
           end
 
           result = DatabaseTypes.registered_type(active_record_type.type)
 
           if !result
-            fail RuntimeError, "The type #{active_record_type} is not registered with DatabaseTypes (attribute #{attribute} on #{model_class.name})"
+            raise "The type #{active_record_type} is not registered with DatabaseTypes (attribute #{attribute} on #{model_class.name})"
           end
 
           # Arrays: Rails doesn't have a generalized way to detect arrays, so we use this method to do it:

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module GraphQL
   module Models
     class BackedByModel
@@ -44,7 +45,7 @@ module GraphQL
           name: name,
           nullable: nullable,
           description: description,
-          deprecation_reason: deprecation_reason
+          deprecation_reason: deprecation_reason,
         }
 
         DefinitionHelpers.define_attribute(@graph_type, @base_model_type, @model_type, @path, attribute, @object_to_model, options, nullable, &block)
@@ -63,7 +64,7 @@ module GraphQL
           name: name,
           nullable: nullable,
           description: description,
-          deprecation_reason: deprecation_reason
+          deprecation_reason: deprecation_reason,
         }
 
         DefinitionHelpers.define_has_one(@graph_type, @base_model_type, @model_type, @path, association, @object_to_model, options, @detect_nulls)
@@ -76,7 +77,7 @@ module GraphQL
           name: name,
           nullable: nullable,
           description: description,
-          deprecation_reason: deprecation_reason
+          deprecation_reason: deprecation_reason,
         })
 
         DefinitionHelpers.define_has_many_connection(@graph_type, @base_model_type, @model_type, @path, association, @object_to_model, options, @detect_nulls)
@@ -90,7 +91,7 @@ module GraphQL
           type: type,
           nullable: nullable,
           description: description,
-          deprecation_reason: deprecation_reason
+          deprecation_reason: deprecation_reason,
         }
 
         DefinitionHelpers.define_has_many_array(@graph_type, @base_model_type, @model_type, @path, association, @object_to_model, options, @detect_nulls)
@@ -107,7 +108,7 @@ module GraphQL
           path: @path,
           base_model_type: @base_model_type,
           model_type: @model_type,
-          object_to_base_model: @object_to_model
+          object_to_base_model: @object_to_model,
         })
 
         defined_field

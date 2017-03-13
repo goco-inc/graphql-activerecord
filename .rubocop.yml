@@ -1,3 +1,125 @@
 inherit_from: .rubocop_todo.yml
 AllCops:
   TargetRubyVersion: 2.3
+  Exclude:
+    - bin/**/*
+    - vendor/gems/**/*
+
+Lint/EndAlignment:
+  EnforcedStyleAlignWith: variable
+  Enabled: false
+
+Lint/UnusedBlockArgument:
+  AllowUnusedKeywordArguments: true
+
+Lint/UnusedMethodArgument:
+  AllowUnusedKeywordArguments: true
+  IgnoreEmptyMethods: true
+
+Metrics/BlockLength:
+  CountComments: false
+  Max: 96
+
+Metrics/ClassLength:
+  Max: 337
+
+Metrics/CyclomaticComplexity:
+  Max: 13
+
+Metrics/MethodLength:
+  CountComments: false
+
+Metrics/ModuleLength:
+  CountComments: false
+  Max: 222
+
+Metrics/PerceivedComplexity:
+  Max: 18
+
+Style/Documentation:
+  Enabled: false
+
+Style/DoubleNegation:
+  Enabled: false
+
+Style/ExtraSpacing:
+  AllowForAlignment: false
+
+Style/FrozenStringLiteralComment:
+  EnforcedStyle: always
+
+Style/GlobalVars:
+  AllowedVariables: [$redis_pool]
+
+Style/HashSyntax:
+  EnforcedStyle: ruby19_no_mixed_keys
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Style/IndentArray:
+  EnforcedStyle: consistent
+
+Style/IndentHash:
+  EnforcedStyle: consistent
+
+Style/Lambda:
+  EnforcedStyle: literal
+
+Style/MultilineMethodCallIndentation:
+  Enabled: false
+
+Style/NegatedIf:
+  Enabled: false
+
+Style/NegatedWhile:
+  Enabled: false
+
+Style/StringLiterals:
+  Enabled: false
+
+Style/TrailingCommaInLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/Attr:
+  Enabled: false
+
+Style/SpaceInLambdaLiteral:
+  EnforcedStyle: require_space
+
+Style/AlignParameters:
+  EnforcedStyle: with_fixed_indentation
+
+Style/WordArray:
+  EnforcedStyle: percent
+  MinSize: 5
+
+Style/StringLiteralsInInterpolation:
+  Enabled: false
+
+Style/TrailingUnderscoreVariable:
+  Enabled: false
+
+Style/TernaryParentheses:
+  Enabled: false
+
+Style/PredicateName:
+  Enabled: false
+
+Style/NumericPredicate:
+  Enabled: false
+
+Style/NumericLiterals:
+  MinDigits: 5
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Style/CaseIndentation:
+  EnforcedStyle: end
+
+Style/BracesAroundHashParameters:
+  Enabled: false
+
+Style/IndentationWidth:
+  Enabled: false

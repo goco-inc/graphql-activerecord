@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module GraphQL
   module Models
     module ActiveRecordExtension
@@ -38,14 +39,14 @@ module GraphQL
           name = "#{self.name}#{attribute.to_s.classify}"
           description = "#{attribute.to_s.titleize} field on #{self.name.titleize}"
 
-          if defined_enums.include?(attribute.to_s)
-            values = defined_enums[attribute.to_s].keys
+          values = if defined_enums.include?(attribute.to_s)
+            defined_enums[attribute.to_s].keys
           else
-            values = Reflection.possible_values(self, attribute)
+            Reflection.possible_values(self, attribute)
           end
 
           if values.nil?
-            fail ArgumentError.new("Could not auto-detect the values for enum #{attribute} on #{self.name}")
+            raise ArgumentError, "Could not auto-detect the values for enum #{attribute} on #{self.name}"
           end
 
           type = GraphQL::EnumType.define do

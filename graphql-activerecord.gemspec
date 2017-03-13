@@ -1,22 +1,23 @@
 # coding: utf-8
+# frozen_string_literal: true
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'graphql/models/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "graphql-activerecord"
-  spec.version       = GraphQL::Models::VERSION
-  spec.authors       = ["Ryan Foster"]
-  spec.email         = ["theorygeek@gmail.com"]
+  spec.name = "graphql-activerecord"
+  spec.version = GraphQL::Models::VERSION
+  spec.authors = ["Ryan Foster"]
+  spec.email = ["theorygeek@gmail.com"]
 
   spec.summary = "ActiveRecord helpers for GraphQL + Relay"
   spec.description = "Build Relay-compatible GraphQL schemas based on ActiveRecord models"
-  spec.homepage =  "http://github.com/goco-inc/graphql-activerecord"
+  spec.homepage = "http://github.com/goco-inc/graphql-activerecord"
   spec.license = "MIT"
 
-  spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
-  spec.bindir        = "exe"
-  spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
+  spec.files = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
+  spec.bindir = "exe"
+  spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
   spec.add_runtime_dependency "activesupport", ">= 4.2", '< 5'

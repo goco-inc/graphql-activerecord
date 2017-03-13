@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module GraphQL
   module Models
     class RelationLoader < GraphQL::Batch::Loader
@@ -8,7 +9,6 @@ module GraphQL
       end
 
       def perform(load_requests)
-
         # Group the requests to load by id into a single relation, and we'll fan it back out after
         # we have the results
 
@@ -38,7 +38,7 @@ module GraphQL
         end
 
         # Generate a CASE column that will tell us whether the row matches this particular relation
-        slicing_columns = relations.each_with_index.map do |relation, index|
+        slicing_columns = relations.each_with_index.map do |_relation, index|
           %{ CASE WHEN "#{model_class.table_name}"."#{model_class.primary_key}" IN (#{selection_clauses[index]}) THEN 1 ELSE 0 END AS "in_relation_#{index}" }
         end
 
@@ -64,7 +64,7 @@ module GraphQL
         # Build the query that will select any of the rows that match the selection clauses
         main_relation = model_class
           .where("id in ((#{selection_clauses.join(") UNION (")}))")
-          .select(%{ "#{model_class.table_name}".* })
+          .select(%( "#{model_class.table_name}".* ))
 
         main_relation = slicing_columns.reduce(main_relation) { |relation, memo| relation.select(memo) }
         main_relation = sorting_columns.reduce(main_relation) { |relation, memo| relation.select(memo) }
