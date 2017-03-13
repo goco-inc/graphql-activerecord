@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class GraphQL::Models::Middleware
   attr_accessor :skip_nil_models
 

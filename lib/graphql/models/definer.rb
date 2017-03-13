@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # This is a helper class. It lets you build simple DSL's. Methods called against the class are
 # converted into attributes in a hash.
 module GraphQL
@@ -7,12 +8,12 @@ module GraphQL
         @values = {}
         methods.each do |m|
           define_singleton_method(m) do |*args|
-            if args.blank?
-              @values[m] = nil
+            @values[m] = if args.blank?
+              nil
             elsif args.length == 1
-              @values[m] = args[0]
+              args[0]
             else
-              @values[m] = args
+              args
             end
           end
         end

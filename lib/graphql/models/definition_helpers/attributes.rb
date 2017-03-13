@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module GraphQL
   module Models
     module DefinitionHelpers
@@ -8,7 +9,7 @@ module GraphQL
         # attribute itself.
         nullable = options[:nullable]
 
-        if nullable == nil
+        if nullable.nil?
           nullable = !(detect_nulls && Reflection.is_required(model_class, attribute_or_association))
         end
 
@@ -32,7 +33,7 @@ module GraphQL
           attribute: attribute,
           base_model_class: base_model_class,
           model_class: model_class,
-          object_to_base_model: object_to_model
+          object_to_base_model: object_to_model,
         })
 
         graph_type.fields[field_name.to_s] = GraphQL::Field.define do
@@ -41,7 +42,7 @@ module GraphQL
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (model, args, context) do
+          resolve -> (model, _args, _context) do
             model&.public_send(attribute)
           end
 

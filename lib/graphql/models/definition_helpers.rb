@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'ostruct'
 
 module GraphQL
@@ -10,16 +11,16 @@ module GraphQL
       # Returns a promise that will eventually resolve to the model that is at the end of the path
       def self.load_and_traverse(current_model, path, context)
         cache_model(context, current_model)
-        return Promise.resolve(current_model) if path.length == 0 || current_model.nil?
+        return Promise.resolve(current_model) if path.empty? || current_model.nil?
 
         association = current_model.association(path[0])
 
-        while path.length > 0 && (association.loaded? || attempt_cache_load(current_model, association, context))
+        while !path.empty? && (association.loaded? || attempt_cache_load(current_model, association, context))
           current_model = association.target
           path = path[1..-1]
           cache_model(context, current_model)
 
-          return Promise.resolve(current_model) if path.length == 0 || current_model.nil?
+          return Promise.resolve(current_model) if path.empty? || current_model.nil?
 
           association = current_model.association(path[0])
         end
@@ -31,7 +32,6 @@ module GraphQL
           # First step, load the :through association (ie, the :open_enrollments)
           through = association.reflection.options[:through]
           load_and_traverse(current_model, [through], context).then do |intermediate_models|
-
             # Now, for each of the intermediate models (OpenEnrollment), load the source association (:health_line)
             sources = intermediate_models.map do |im|
               load_and_traverse(im, [association.reflection.source_reflection_name], context)
@@ -107,14 +107,14 @@ module GraphQL
         association.set_inverse_instance(target) unless target.nil?
       end
 
-      def self.traverse_path(base_model, path, context)
+      def self.traverse_path(base_model, path, _context)
         model = base_model
         path.each do |segment|
           return nil unless model
           model = model.public_send(segment)
         end
 
-        return model
+        model
       end
 
       # Stores metadata about GraphQL fields that are available on this model's GraphQL type.

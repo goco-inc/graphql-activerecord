@@ -1,11 +1,12 @@
+# frozen_string_literal: true
 module GraphQL
   module Models
     module DefinitionHelpers
       def self.define_proxy(graph_type, base_model_type, model_type, path, association, object_to_model, detect_nulls, &block)
         reflection = model_type.reflect_on_association(association)
-        raise ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
-        raise ArgumentError.new("Cannot proxy to polymorphic association #{association} on model #{model_type.name}") if reflection.polymorphic?
-        raise ArgumentError.new("Cannot proxy to #{reflection.macro} association #{association} on model #{model_type.name}") unless [:has_one, :belongs_to].include?(reflection.macro)
+        raise ArgumentError, "Association #{association} wasn't found on model #{model_type.name}" unless reflection
+        raise ArgumentError, "Cannot proxy to polymorphic association #{association} on model #{model_type.name}" if reflection.polymorphic?
+        raise ArgumentError, "Cannot proxy to #{reflection.macro} association #{association} on model #{model_type.name}" unless [:has_one, :belongs_to].include?(reflection.macro)
 
         return unless block_given?
 
@@ -34,7 +35,7 @@ module GraphQL
           valid_types = Reflection.possible_values(model_type, reflection.foreign_type)
 
           if valid_types.blank?
-            fail ArgumentError.new("Cannot include polymorphic #{reflection.name} association on model #{model_type.name}, because it does not define an inclusion validator on #{reflection.foreign_type}")
+            raise ArgumentError, "Cannot include polymorphic #{reflection.name} association on model #{model_type.name}, because it does not define an inclusion validator on #{reflection.foreign_type}"
           end
 
           graph_types = valid_types.map { |t| GraphQL::Models.get_graphql_type(t) }.compact
@@ -54,8 +55,8 @@ module GraphQL
       def self.define_has_one(graph_type, base_model_type, model_type, path, association, object_to_model, options, detect_nulls)
         reflection = model_type.reflect_on_association(association)
 
-        fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
-        fail ArgumentError.new("Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_one") unless [:has_one, :belongs_to].include?(reflection.macro)
+        raise ArgumentError, "Association #{association} wasn't found on model #{model_type.name}" unless reflection
+        raise ArgumentError, "Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_one" unless [:has_one, :belongs_to].include?(reflection.macro)
 
         # Define the field for the association itself
 
@@ -70,7 +71,7 @@ module GraphQL
           association: association,
           base_model_type: base_model_type,
           model_type: model_type,
-          object_to_base_model: object_to_model
+          object_to_base_model: object_to_model,
         })
 
         graph_type.fields[camel_name.to_s] = GraphQL::Field.define do
@@ -79,7 +80,7 @@ module GraphQL
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (model, args, context) do
+          resolve -> (model, _args, context) do
             return nil unless model
             DefinitionHelpers.load_and_traverse(model, [association], context)
           end
@@ -96,7 +97,7 @@ module GraphQL
           association: association,
           base_model_type: base_model_type,
           model_type: model_type,
-          object_to_base_model: object_to_model
+          object_to_base_model: object_to_model,
         })
 
         can_use_optimized = reflection.macro == :belongs_to
@@ -110,7 +111,7 @@ module GraphQL
           type id_field_type
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (model, args, context) do
+          resolve -> (model, _args, context) do
             return nil unless model
 
             if can_use_optimized
@@ -130,8 +131,8 @@ module GraphQL
       def self.define_has_many_array(graph_type, base_model_type, model_type, path, association, object_to_model, options, detect_nulls)
         reflection = model_type.reflect_on_association(association)
 
-        fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
-        fail ArgumentError.new("Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_many_array") unless [:has_many].include?(reflection.macro)
+        raise ArgumentError, "Association #{association} wasn't found on model #{model_type.name}" unless reflection
+        raise ArgumentError, "Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_many_array" unless [:has_many].include?(reflection.macro)
 
         association_type = options[:type] || GraphQL::Models.get_graphql_type!(reflection.klass)
 
@@ -144,7 +145,7 @@ module GraphQL
         # The has_many associations are a little special. Instead of checking for a presence validator, we instead assume
         # that the outer type should be non-null, unless detect_nulls is false. In other words, we prefer an empty
         # array for the association, rather than null.
-        if (options[:nullable] == nil && detect_nulls) || options[:nullable] == false
+        if (options[:nullable].nil? && detect_nulls) || options[:nullable] == false
           association_type = association_type.to_non_null_type
           id_field_type = id_field_type.to_non_null_type
         end
@@ -158,7 +159,7 @@ module GraphQL
           association: association,
           base_model_type: base_model_type,
           model_type: model_type,
-          object_to_base_model: object_to_model
+          object_to_base_model: object_to_model,
         })
 
         graph_type.fields[camel_name.to_s] = GraphQL::Field.define do
@@ -167,7 +168,7 @@ module GraphQL
           description options[:description] if options.include?(:description)
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (model, args, context) do
+          resolve -> (model, _args, context) do
             return nil unless model
             DefinitionHelpers.load_and_traverse(model, [association], context).then do |result|
               Array.wrap(result)
@@ -185,7 +186,7 @@ module GraphQL
           association: association,
           base_model_type: base_model_type,
           model_type: model_type,
-          object_to_base_model: object_to_model
+          object_to_base_model: object_to_model,
         })
 
         graph_type.fields[id_field_name.to_s] = GraphQL::Field.define do
@@ -193,7 +194,7 @@ module GraphQL
           type id_field_type
           deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
 
-          resolve -> (model, args, context) do
+          resolve -> (model, _args, context) do
             return nil unless model
             DefinitionHelpers.load_and_traverse(model, [association], context).then do |result|
               Array.wrap(result).map(&:gid)
@@ -205,12 +206,12 @@ module GraphQL
       def self.define_has_many_connection(graph_type, base_model_type, model_type, path, association, object_to_model, options, detect_nulls)
         reflection = model_type.reflect_on_association(association)
 
-        fail ArgumentError.new("Association #{association} wasn't found on model #{model_type.name}") unless reflection
-        fail ArgumentError.new("Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_many_connection") unless [:has_many].include?(reflection.macro)
+        raise ArgumentError, "Association #{association} wasn't found on model #{model_type.name}" unless reflection
+        raise ArgumentError, "Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_many_connection" unless [:has_many].include?(reflection.macro)
 
         connection_type = GraphQL::Models.get_graphql_type!(reflection.klass).connection_type
 
-        if (options[:nullable] == nil && detect_nulls) || options[:nullable] == false
+        if (options[:nullable].nil? && detect_nulls) || options[:nullable] == false
           connection_type = connection_type.to_non_null_type
         end
 
@@ -223,11 +224,11 @@ module GraphQL
           association: association,
           base_model_type: base_model_type,
           model_type: model_type,
-          object_to_base_model: object_to_model
+          object_to_base_model: object_to_model,
         })
 
         GraphQL::Define::AssignConnection.call(graph_type, camel_name, connection_type) do
-          resolve -> (model, args, context) do
+          resolve -> (model, _args, _context) do
             return nil unless model
             model.public_send(association)
           end

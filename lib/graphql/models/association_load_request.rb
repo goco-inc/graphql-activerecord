@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module GraphQL
   module Models
     class AssociationLoadRequest
@@ -9,7 +10,7 @@ module GraphQL
         @context = context
 
         if reflection.is_a?(ActiveRecord::Reflection::ThroughReflection)
-          fail ArgumentError, "You cannot batch-load a has_many :through association. Instead, load each association individually."
+          raise ArgumentError, "You cannot batch-load a has_many :through association. Instead, load each association individually."
         end
       end
 
@@ -33,7 +34,7 @@ module GraphQL
       #################################################################
 
       def target_class
-        case when reflection.polymorphic?
+        if reflection.polymorphic?
           base_model.send(reflection.foreign_type).constantize
         else
           reflection.klass
@@ -49,7 +50,6 @@ module GraphQL
       def reflection
         association.reflection
       end
-
     end
   end
 end

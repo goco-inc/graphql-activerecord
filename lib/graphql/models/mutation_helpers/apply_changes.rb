@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module GraphQL::Models
   module MutationHelpers
     def self.apply_changes(field_map, model, inputs, context)
@@ -40,7 +41,7 @@ module GraphQL::Models
         end
       end
 
-      return changes
+      changes
     end
 
     def self.handle_nested_map(parent_map, parent_model, inputs, context, child_map)
@@ -66,7 +67,7 @@ module GraphQL::Models
         changes.concat(child_changes)
       end
 
-      return changes
+      changes
     end
 
     def self.match_inputs_to_models(model, child_map, next_inputs, changes)
@@ -92,7 +93,7 @@ module GraphQL::Models
           changes.push({ model_instance: child_model, action: :create })
         end
 
-        return [{ child_model: child_model, child_inputs: next_inputs }]
+        [{ child_model: child_model, child_inputs: next_inputs }]
       else
         next_inputs = [] if next_inputs.nil?
 
@@ -108,7 +109,7 @@ module GraphQL::Models
       end
     end
 
-    def self.match_inputs_by_position(model, child_map, next_inputs, changes, associated_models)
+    def self.match_inputs_by_position(_model, _child_map, next_inputs, changes, associated_models)
       count = [associated_models.length, next_inputs.length].max
 
       matches = []
@@ -130,10 +131,10 @@ module GraphQL::Models
         matches.push({ child_model: child_model, child_inputs: inputs, input_path: idx })
       end
 
-      return matches
+      matches
     end
 
-    def self.match_inputs_by_fields(model, child_map, next_inputs, changes, associated_models, find_by)
+    def self.match_inputs_by_fields(_model, child_map, next_inputs, changes, associated_models, find_by)
       # Convert the find_by into the field definitions, so that we properly unmap aliased fields
       find_by_defs = find_by.map { |name| child_map.fields.detect { |f| f[:attribute].to_s == name.to_s } }
       name_to_attr = find_by_defs.map { |f| [f[:name], f[:attribute].to_s] }.to_h
@@ -175,7 +176,7 @@ module GraphQL::Models
         matches.push({ child_model: child_model, child_inputs: inputs, input_path: next_inputs.index(inputs) })
       end
 
-      return matches
+      matches
     end
 
     # Returns the instance of the model that will be changed for this field. If new models are created along the way,
@@ -197,7 +198,7 @@ module GraphQL::Models
         model_to_change = next_model
       end
 
-      return model_to_change
+      model_to_change
     end
 
     def self.apply_field_value(model, field_def, value, context, changes)
@@ -206,7 +207,7 @@ module GraphQL::Models
         target_model = GraphQL::Models.model_from_id.call(value, context)
 
         unless target_model
-          fail GraphQL::ExecutionError.new("The value provided for #{field_def[:name]} does not refer to a valid model.")
+          raise GraphQL::ExecutionError, "The value provided for #{field_def[:name]} does not refer to a valid model."
         end
 
         value = target_model.id
@@ -219,7 +220,7 @@ module GraphQL::Models
           model_instance: model,
           input_path: field_def[:name],
           attribute: field_def[:attribute],
-          action: model.new_record? ? :create : :update
+          action: model.new_record? ? :create : :update,
         })
       end
     end
@@ -250,6 +251,5 @@ module GraphQL::Models
 
       values
     end
-
   end
 end

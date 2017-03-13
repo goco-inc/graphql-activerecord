@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'active_support'
 require 'active_record'
 require 'graphql'
@@ -33,7 +34,6 @@ require 'graphql/models/mutation_field_map'
 
 require 'graphql/models/backed_by_model'
 require 'graphql/models/mutator'
-
 
 module GraphQL
   module Models
@@ -94,7 +94,7 @@ module GraphQL
 
     def self.get_graphql_type!(model_class)
       type = get_graphql_type(model_class)
-      fail RuntimeError, "Could not locate GraphQL type for model #{model_class}" if type.nil?
+      raise "Could not locate GraphQL type for model #{model_class}" if type.nil?
       type
     end
   end

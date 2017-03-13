@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module GraphQL::Models
   # Simplified loader that can take a hash of attributes to match, combine them into a single query, and then fulfill
   # then individually. It can also ask the database to order them correctly.
