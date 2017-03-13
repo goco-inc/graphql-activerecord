@@ -16,9 +16,6 @@ Lint/UnusedMethodArgument:
   AllowUnusedKeywordArguments: true
   IgnoreEmptyMethods: true
 
-Metrics/AbcSize:
-  Max: 45
-
 Metrics/BlockLength:
   CountComments: false
   Max: 96
@@ -31,14 +28,10 @@ Metrics/CyclomaticComplexity:
 
 Metrics/MethodLength:
   CountComments: false
-  Max: 34
 
 Metrics/ModuleLength:
   CountComments: false
   Max: 222
-
-Metrics/ParameterLists:
-  Max: 6
 
 Metrics/PerceivedComplexity:
   Max: 18
@@ -100,9 +93,6 @@ Style/AlignParameters:
 Style/WordArray:
   EnforcedStyle: percent
   MinSize: 5
-
-Metrics/LineLength:
-  Max: 200
 
 Style/StringLiteralsInInterpolation:
   Enabled: false
