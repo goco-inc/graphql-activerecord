@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'spec_helper'
 
 RSpec.describe GraphQL::Models::HashCombiner do
@@ -16,7 +17,7 @@ RSpec.describe GraphQL::Models::HashCombiner do
 
       output = [
         { type: 'hello', id: [1, 2, 3, 4] },
-        { type: 'world', id: [11, 21, 31, 41] }
+        { type: 'world', id: [11, 21, 31, 41] },
       ]
 
       expect(GraphQL::Models::HashCombiner.combine(input)).to eq output
@@ -31,7 +32,7 @@ RSpec.describe GraphQL::Models::HashCombiner do
       ]
 
       output = [
-        { prop_1: 'hello', prop_2: 'world', id: [1, 2, 3, 4] }
+        { prop_1: 'hello', prop_2: 'world', id: [1, 2, 3, 4] },
       ]
 
       expect(GraphQL::Models::HashCombiner.combine(input)).to eq output
@@ -40,11 +41,11 @@ RSpec.describe GraphQL::Models::HashCombiner do
     it "can combine arrays together" do
       input = [
         { prop_1: 'hello', prop_2: [1, 2, 3] },
-        { prop_1: 'hello', prop_2: [4, 5, 6] }
+        { prop_1: 'hello', prop_2: [4, 5, 6] },
       ]
 
       output = [
-        { prop_1: 'hello', prop_2: [1, 2, 3, 4, 5, 6] }
+        { prop_1: 'hello', prop_2: [1, 2, 3, 4, 5, 6] },
       ]
 
       expect(GraphQL::Models::HashCombiner.combine(input)).to eq output

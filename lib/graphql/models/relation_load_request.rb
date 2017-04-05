@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module GraphQL
   module Models
     class RelationLoadRequest
@@ -26,8 +27,7 @@ module GraphQL
       end
 
       # When the request is fulfilled, this method is called so that it can do whatever caching, etc. is needed
-      def fulfilled(result)
-      end
+      def fulfilled(result); end
 
       def load
         loader.load(self)
@@ -46,7 +46,6 @@ module GraphQL
       def loader
         @loader ||= RelationLoader.for(target_class)
       end
-
     end
   end
 end
