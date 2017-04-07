@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.11.0
+Breaking Bug Fix: Turns out that 0.10.0 was _supposed_ to introduce (non)nullability on attributes, but it didn’t quite work. That’s
+fixed in 0.11.0 (and, I _really_ need to write some tests for this gem).
+
 # 0.10.0
 There are a few breaking changes:
 - Added automatic nullability checking for attributes. It’s enabled by default; see the README for more info.

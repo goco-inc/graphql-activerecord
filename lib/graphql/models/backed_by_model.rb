@@ -48,7 +48,7 @@ module GraphQL
           deprecation_reason: deprecation_reason,
         }
 
-        DefinitionHelpers.define_attribute(@graph_type, @base_model_type, @model_type, @path, attribute, @object_to_model, options, nullable, &block)
+        DefinitionHelpers.define_attribute(@graph_type, @base_model_type, @model_type, @path, attribute, @object_to_model, options, @detect_nulls, &block)
       end
 
       # Flattens an associated model into the graph type, allowing to you adds its attributes as if they existed on the parent model.
