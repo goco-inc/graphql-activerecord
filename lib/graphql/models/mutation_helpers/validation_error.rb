@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module GraphQL::Models
   module MutationHelpers
     class ValidationError < GraphQL::ExecutionError
@@ -13,16 +14,14 @@ module GraphQL::Models
           'message' => "Some of your changes could not be saved.",
           'kind' => "INVALID_ARGUMENTS",
           'invalidArguments' => invalid_arguments,
-          'unknownErrors' => unknown_errors
+          'unknownErrors' => unknown_errors,
         }
 
         if ast_node
-          values.merge!({
-            'locations' => [{
-              "line" => ast_node.line,
-              "column" => ast_node.col,
-            }]
-          })
+          values['locations'] = [{
+            "line" => ast_node.line,
+            "column" => ast_node.col,
+          },]
         end
 
         values

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'active_support'
 require 'active_record'
 require 'graphql'
@@ -19,7 +20,8 @@ require 'graphql/models/relation_loader'
 # Order matters...
 require 'graphql/models/promise_relation_connection'
 require 'graphql/models/relation_load_request'
-require 'graphql/models/scalar_types'
+require 'graphql/models/database_types'
+require 'graphql/models/reflection'
 require 'graphql/models/definition_helpers'
 require 'graphql/models/definition_helpers/associations'
 require 'graphql/models/definition_helpers/attributes'
@@ -30,16 +32,13 @@ require 'graphql/models/mutation_helpers/validation_error'
 require 'graphql/models/mutation_helpers/validation'
 require 'graphql/models/mutation_field_map'
 
-require 'graphql/models/proxy_block'
 require 'graphql/models/backed_by_model'
-require 'graphql/models/object_type'
 require 'graphql/models/mutator'
-
 
 module GraphQL
   module Models
     class << self
-      attr_accessor :node_interface_proc, :model_from_id, :authorize, :id_for_model
+      attr_accessor :model_from_id, :authorize, :id_for_model, :model_to_graphql_type
     end
 
     # Returns a promise that will traverse the associations and resolve to the model at the end of the path.
@@ -82,5 +81,30 @@ module GraphQL
       MutationHelpers.print_input_fields(mutator_definition.field_map, definer, "#{prefix}Input")
       mutator_definition
     end
+
+    def self.get_graphql_type(model_class)
+      model_class = model_class.constantize if model_class.is_a?(String)
+
+      if model_to_graphql_type
+        model_to_graphql_type[model_class]
+      else
+        "#{model_class.name}Type".safe_constantize
+      end
+    end
+
+    def self.get_graphql_type!(model_class)
+      type = get_graphql_type(model_class)
+      raise "Could not locate GraphQL type for model #{model_class}" if type.nil?
+      type
+    end
   end
 end
+
+GraphQL::ObjectType.accepts_definitions(
+  backed_by_model: -> (graph_type, model_type, &block) do
+    model_type = model_type.to_s.classify.constantize unless model_type.is_a?(Class)
+
+    backer = GraphQL::Models::BackedByModel.new(graph_type, model_type)
+    backer.instance_exec(&block)
+  end
+)

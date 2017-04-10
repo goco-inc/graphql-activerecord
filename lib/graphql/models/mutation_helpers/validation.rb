@@ -1,12 +1,13 @@
+# frozen_string_literal: true
 module GraphQL::Models
   module MutationHelpers
-    def self.validate_changes(inputs, field_map, root_model, context, all_changes)
+    def self.validate_changes(inputs, field_map, root_model, _context, all_changes)
       invalid_fields = {}
       unknown_errors = []
 
       changed_models = all_changes.group_by { |c| c[:model_instance] }
 
-      changed_models.reject { |m, v| m.valid? }.each do |model, changes|
+      changed_models.reject { |m, _v| m.valid? }.each do |model, changes|
         attrs_to_field = changes
           .select { |c| c[:attribute] && c[:input_path] }
           .map { |c| [c[:attribute], c[:input_path]] }
@@ -29,7 +30,7 @@ module GraphQL::Models
                 modelType: model.class.name,
                 modelRid: model.id,
                 attribute: attribute,
-                message: message
+                message: message,
               })
             end
           end
@@ -37,11 +38,11 @@ module GraphQL::Models
       end
 
       unless invalid_fields.empty? && unknown_errors.empty?
-        fail ValidationError.new(invalid_fields, unknown_errors)
+        raise ValidationError.new(invalid_fields, unknown_errors)
       end
     end
 
-    def self.add_error(attribute, message, path, invalid_fields)
+    def self.add_error(_attribute, message, path, invalid_fields)
       path = Array.wrap(path)
 
       current = invalid_fields
@@ -96,9 +97,7 @@ module GraphQL::Models
         end
       end
 
-      return nil
+      nil
     end
-
-
   end
 end

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module GraphQL::Models
   class MutationFieldMap
     attr_accessor :model_type, :find_by, :null_behavior, :fields, :nested_maps
@@ -6,8 +7,8 @@ module GraphQL::Models
     attr_accessor :name, :association, :has_many, :required, :path
 
     def initialize(model_type, find_by:, null_behavior:)
-      fail ArgumentError.new("model_type must be a model") if model_type && !(model_type <= ActiveRecord::Base)
-      fail ArgumentError.new("null_behavior must be :set_null or :leave_unchanged") unless [:set_null, :leave_unchanged].include?(null_behavior)
+      raise ArgumentError, "model_type must be a model" if model_type && !(model_type <= ActiveRecord::Base)
+      raise ArgumentError, "null_behavior must be :set_null or :leave_unchanged" unless [:set_null, :leave_unchanged].include?(null_behavior)
 
       @fields = []
       @nested_maps = []
@@ -23,31 +24,23 @@ module GraphQL::Models
       GraphQL::Define::TypeDefiner.instance
     end
 
-    def attr(attribute, type: nil, name: nil, required: false)
+    def attr(attribute, type: nil, name: nil, required: nil)
       attribute = attribute.to_sym if attribute.is_a?(String)
 
       if type.nil? && !model_type
-        fail ArgumentError.new("You must specify a type for attribute #{name}, because its model type is not known until runtime.")
+        raise ArgumentError, "You must specify a type for attribute #{name}, because its model type is not known until runtime."
       end
 
-      if model_type
-        column = DefinitionHelpers.get_column(model_type, attribute)
+      if type.nil? && (attribute == :id || foreign_keys.include?(attribute))
+        type = types.ID
+      end
 
-        if column.nil? && type.nil?
-          fail ArgumentError.new("You must specify a type for attribute #{name}, because it's not a column on #{model_type}.")
-        end
+      if type.nil? && model_type
+        type = Reflection.attribute_graphql_type(model_type, attribute).input
+      end
 
-        if column
-          type ||= begin
-            if attribute == :id || foreign_keys.include?(attribute)
-              type = types.ID
-            else
-              type = column.graphql_type
-            end
-          end
-
-          required = DefinitionHelpers.detect_is_required(model_type, attribute)
-        end
+      if required.nil?
+        required = model_type ? Reflection.is_required(model_type, attribute) : false
       end
 
       name ||= attribute.to_s.camelize(:lower)
@@ -59,7 +52,7 @@ module GraphQL::Models
         name: name,
         attribute: attribute,
         type: type,
-        required: required
+        required: required,
       })
     end
 
@@ -70,7 +63,7 @@ module GraphQL::Models
 
       if reflection
         unless [:belongs_to, :has_one].include?(reflection.macro)
-          fail ArgumentError.new("Cannot proxy to #{reflection.macro} association #{association} from #{model_type.name}")
+          raise ArgumentError, "Cannot proxy to #{reflection.macro} association #{association} from #{model_type.name}"
         end
 
         klass = reflection.polymorphic? ? nil : reflection.klass
@@ -91,7 +84,7 @@ module GraphQL::Models
           attribute: field[:attribute],
           type: field[:type],
           required: field[:required],
-          path: [association] + Array.wrap(field[:path])
+          path: [association] + Array.wrap(field[:path]),
         })
       end
 
@@ -103,22 +96,22 @@ module GraphQL::Models
 
     def nested(association, find_by: nil, null_behavior:, name: nil, has_many: false, &block)
       unless model_type
-        fail ArgumentError.new("Cannot use `nested` unless the model type is known at build time.")
+        raise ArgumentError, "Cannot use `nested` unless the model type is known at build time."
       end
 
       association = association.to_sym if association.is_a?(String)
       reflection = model_type.reflect_on_association(association)
 
       unless reflection
-        fail ArgumentError.new("Could not find association #{association} on #{model_type.name}")
+        raise ArgumentError, "Could not find association #{association} on #{model_type.name}"
       end
 
       if reflection.polymorphic?
-        fail ArgumentError.new("Cannot used `nested` with polymorphic association #{association} on #{model_type.name}")
+        raise ArgumentError, "Cannot used `nested` with polymorphic association #{association} on #{model_type.name}"
       end
 
       has_many = reflection.macro == :has_many
-      required = DefinitionHelpers.detect_is_required(model_type, association)
+      required = Reflection.is_required(model_type, association)
 
       map = MutationFieldMap.new(reflection.klass, find_by: find_by, null_behavior: null_behavior)
       map.name = name || association.to_s.camelize(:lower)
@@ -141,7 +134,7 @@ module GraphQL::Models
 
     def detect_field_conflict(name)
       if fields.any? { |f| f[name] == name } || nested_maps.any? { |n| n.name == name }
-        fail ArgumentError.new("The field #{name} is defined more than once.")
+        raise ArgumentError, "The field #{name} is defined more than once."
       end
     end
 
