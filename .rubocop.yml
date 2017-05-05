@@ -123,3 +123,6 @@ Style/BracesAroundHashParameters:
 
 Style/IndentationWidth:
   Enabled: false
+
+Style/BlockDelimiters:
+  Enabled: false
