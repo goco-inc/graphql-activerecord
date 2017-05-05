@@ -142,8 +142,8 @@ GraphQL::Schema.define do
   lazy_resolve(Promise, :sync)
   instrument(:query, GraphQL::Batch::Setup)
 
-  # This middleware should be somewhere near the top of your middleware chain
-  middleware GraphQL::Models::Middleware.new
+  # Set up the graphql-activerecord gem
+  instrument(:field, GraphQL::Models::Instrumentation.new)
 end
 ```
 

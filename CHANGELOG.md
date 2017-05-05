@@ -1,5 +1,25 @@
 # Changelog
 
+# 0.12.0
+This version is focussed on compatibility with the GraphQL 1.5.10. Changes are relatively minor, and mostly are in response to the udpated way that connections are handled in the graphql gem now.
+
+Breaking Changes:
+The middleware that the gem uses for preloading associations has been replaced with instrumentation. So instead of this:
+```ruby
+Schema.define do
+  # other stuff
+  middleware GraphQL::Models::Middleware.new
+end
+```
+You should do this:
+```ruby
+Schema.define do
+  # other stuff
+  instrument :field, GraphQL::Models::Instrumentation.new
+end
+```
+If you were using the `skip_nil_models` option to force your field resolvers to be invoked even when the model ends up not existing, it is available on instrumentation.
+
 # 0.11.0
 Breaking Bug Fix: Turns out that 0.10.0 was _supposed_ to introduce (non)nullability on attributes, but it didn’t quite work. That’s
 fixed in 0.11.0 (and, I _really_ need to write some tests for this gem).
