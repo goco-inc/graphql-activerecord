@@ -215,7 +215,7 @@ module GraphQL
           connection_type = connection_type.to_non_null_type
         end
 
-        camel_name = options[:name]
+        camel_name = options[:name].to_s
 
         DefinitionHelpers.register_field_metadata(graph_type, camel_name, {
           macro: :has_many_connection,
@@ -227,12 +227,20 @@ module GraphQL
           object_to_base_model: object_to_model,
         })
 
-        GraphQL::Define::AssignConnection.call(graph_type, camel_name, connection_type) do
+        connection_field = graph_type.fields[camel_name] = GraphQL::Field.define do
+          name(camel_name)
+          type(connection_type)
+          description options[:description] if options.include?(:description)
+          deprecation_reason options[:deprecation_reason] if options.include?(:deprecation_reason)
+
           resolve -> (model, _args, _context) do
             return nil unless model
             model.public_send(association)
           end
         end
+
+        connection_field.connection = true
+        connection_field
       end
     end
   end

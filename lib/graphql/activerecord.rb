@@ -7,7 +7,7 @@ require 'graphql/relay'
 
 require 'graphql/models/monkey_patches/graphql_query_context'
 require 'graphql/models/active_record_extension'
-require 'graphql/models/middleware'
+require 'graphql/models/instrumentation'
 
 # Helpers
 require 'graphql/models/helpers'
