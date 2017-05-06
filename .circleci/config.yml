@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: /graphql-activerecord
     docker:
-      - image: ruby:2.3.1
+      - image: ruby:2.4.1
     steps:
       - checkout
 
