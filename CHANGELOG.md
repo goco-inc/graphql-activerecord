@@ -1,6 +1,6 @@
 # Changelog
 
-# [Unreleased Changes]
+# 0.12.1
 Updates the gemspec to support Rails 5
 
 # 0.12.0
