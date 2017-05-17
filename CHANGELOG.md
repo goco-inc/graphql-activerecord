@@ -1,5 +1,8 @@
 # Changelog
 
+# [Unreleased Changes]
+Updates the gemspec to support Rails 5
+
 # 0.12.0
 This version is focussed on compatibility with the GraphQL 1.5.10. Changes are relatively minor, and mostly are in response to the udpated way that connections are handled in the graphql gem now.
 
