@@ -51,7 +51,7 @@ module GraphQL::Models
       return [] if next_inputs.nil? && parent_map.leave_null_unchanged?
 
       changes = []
-      matches = match_inputs_to_models(parent_model, child_map, next_inputs, changes)
+      matches = match_inputs_to_models(parent_model, child_map, next_inputs, changes, context)
 
       matches.each do |match|
         next if match[:child_model].nil? && match[:child_inputs].nil?
@@ -70,7 +70,7 @@ module GraphQL::Models
       changes
     end
 
-    def self.match_inputs_to_models(model, child_map, next_inputs, changes)
+    def self.match_inputs_to_models(model, child_map, next_inputs, changes, context)
       if !child_map.has_many
         child_model = model.public_send(child_map.association)
 
@@ -104,7 +104,7 @@ module GraphQL::Models
         if find_by.empty?
           return match_inputs_by_position(model, child_map, next_inputs, changes, associated_models)
         else
-          return match_inputs_by_fields(model, child_map, next_inputs, changes, associated_models, find_by)
+          return match_inputs_by_fields(model, child_map, next_inputs, changes, associated_models, find_by, context)
         end
       end
     end
@@ -134,7 +134,7 @@ module GraphQL::Models
       matches
     end
 
-    def self.match_inputs_by_fields(_model, child_map, next_inputs, changes, associated_models, find_by)
+    def self.match_inputs_by_fields(_model, child_map, next_inputs, changes, associated_models, find_by, context)
       # Convert the find_by into the field definitions, so that we properly unmap aliased fields
       find_by_defs = find_by.map { |name| child_map.fields.detect { |f| f[:attribute].to_s == name.to_s } }
       name_to_attr = find_by_defs.map { |f| [f[:name], f[:attribute].to_s] }.to_h
@@ -145,16 +145,26 @@ module GraphQL::Models
       indexed_inputs = next_inputs.index_by { |ni| ni.to_h.slice(*name_to_attr.keys) }
 
       indexed_inputs = indexed_inputs.map do |key, inputs|
-        key = key.map { |name, val| [name_to_attr[name], val] }.to_h
-        [key, inputs]
+        attr_key = {}
+        key.each do |name, val|
+          # If the input is a Relay ID, convert it to the model's ordinary ID first. Note, this is
+          # less than optimal, because it has to fetch the model and then just get its id :(
+          field_def = find_by_defs.detect { |d| d[:name] == name }
+          if val && field_def[:type].unwrap == GraphQL::ID_TYPE
+            val = relay_id_to_model_id(val, context)
+            raise GraphQL::ExecutionError, "The value provided for #{field_def[:name]} does not refer to a valid model." unless val
+          end
+
+          attr_key[name_to_attr[name]] = val
+        end
+
+        [attr_key, inputs]
       end
 
       indexed_inputs = indexed_inputs.to_h
 
       # Match each model to its input. If there is no input for it, mark that the model should be destroyed.
       matches = []
-
-      # TODO: Support for finding by an ID field, that needs to be untranslated from a Relay ID into a model ID
 
       indexed_models.each do |key_attrs, child_model|
         inputs = indexed_inputs[key_attrs]
@@ -204,13 +214,10 @@ module GraphQL::Models
     def self.apply_field_value(model, field_def, value, context, changes)
       # Special case: If this is an ID field, get the ID from the target model
       if value.present? && field_def[:type].unwrap == GraphQL::ID_TYPE
-        target_model = GraphQL::Models.model_from_id.call(value, context)
-
-        unless target_model
+        value = relay_id_to_model_id(value, context)
+        unless value
           raise GraphQL::ExecutionError, "The value provided for #{field_def[:name]} does not refer to a valid model."
         end
-
-        value = target_model.id
       end
 
       unless model.public_send(field_def[:attribute]) == value
@@ -250,6 +257,11 @@ module GraphQL::Models
       field_map.nested_maps.reject { |m| values.include?(m.name) }.each { |m| values[m.name] = nil }
 
       values
+    end
+
+    def self.relay_id_to_model_id(relay_id, context)
+      target_model = GraphQL::Models.model_from_id.call(relay_id, context)
+      target_model&.id
     end
   end
 end

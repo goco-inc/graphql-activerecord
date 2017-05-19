@@ -48,12 +48,15 @@ module GraphQL::Models
 
       detect_field_conflict(name)
 
-      fields.push({
+      # Delete the field, if it's already in the map
+      fields.reject! { |fd| fd[:attribute] == attribute }
+
+      fields << {
         name: name,
         attribute: attribute,
         type: type,
         required: required,
-      })
+      }
     end
 
     def proxy_to(association, &block)
