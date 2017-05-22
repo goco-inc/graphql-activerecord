@@ -41,7 +41,7 @@ module GraphQL
           graph_types = valid_types.map { |t| GraphQL::Models.get_graphql_type(t) }.compact
 
           GraphQL::UnionType.define do
-            name "#{model_type.name}#{reflection.foreign_type.classify}"
+            name "#{model_type.table_name.titleize}#{reflection.foreign_type.classify}"
             description "Objects that can be used as #{reflection.foreign_type.titleize.downcase} on #{model_type.name.titleize.downcase}"
             possible_types graph_types
           end
