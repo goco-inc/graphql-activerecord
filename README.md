@@ -374,8 +374,8 @@ nested :emergency_contacts, find_by: :priority, null_behavior: :set_null do
 end
 ```
 
-This causes the gem to automatically include `priority` as an input field. Unfortunately, the only field you _can't_ use is the
-`id` field, because the gem isn't smart enough to map global ID's to model ID's. (This will be supported eventually, though.)
+This causes the gem to automatically include `priority` as an input field. You could also manually specify the
+`priority` field if you wanted to override its name or type.
 
 Also, an important note is that the gem assumes that you are passing up _all_ of the associated models, and not just some of
 them. It will destroy extra models, or create missing models.

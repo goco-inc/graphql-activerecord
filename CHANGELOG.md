@@ -1,5 +1,10 @@
 # Changelog
 
+# [Unreleased]
+In mutators, the gem now supports updating nested models, where the `find_by` option specifies an ID field. This works similarly
+to input fields that accept ID values: it expects a global ID value to be provided, and uses your configured `model_from_id` proc
+to get the model's database ID.
+
 # 0.12.1
 Updates the gemspec to support Rails 5
 
