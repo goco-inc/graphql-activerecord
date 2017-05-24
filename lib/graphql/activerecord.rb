@@ -88,7 +88,7 @@ module GraphQL
       if model_to_graphql_type
         model_to_graphql_type[model_class]
       else
-        "#{model_class.name}Type".safe_constantize
+        "Types::#{model_class.name}Type".safe_constantize
       end
     end
 
