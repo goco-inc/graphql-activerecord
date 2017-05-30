@@ -132,7 +132,7 @@ GraphQL::Models.authorize = -> (context, action, model) {
 
 # The gem assumes that if your model is called `MyModel`, the corresponding type is `MyModelType`.
 # You can override that convention. Return `nil` if the model doesn't have a GraphQL type:
-GraphQL::Models.model_to_graphql_type -> (model_class) { "#{model_class.name}Graph".safe_constantize }
+GraphQL::Models.model_to_graphql_type = -> (model_class) { "#{model_class.name}Graph".safe_constantize }
 ```
 
 Finally, you need to set a few options on your schema:
