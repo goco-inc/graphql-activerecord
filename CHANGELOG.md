@@ -39,7 +39,7 @@ There are a few breaking changes:
   to bring it more in line with common practice. You can get the old behavior by adding this to an initializer:
 
 ```ruby
-  GraphQL::Models.model_to_graphql_type -> (model_class) { "#{model_class.name}Graph".safe_constantize }
+  GraphQL::Models.model_to_graphql_type = -> (model_class) { "#{model_class.name}Graph".safe_constantize }
 ```
 
 - Fixed a bug with the `has_many_connection` helper, which deserves some explanation. This helper constructs a
