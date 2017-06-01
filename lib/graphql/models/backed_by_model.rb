@@ -44,7 +44,7 @@ module GraphQL
         options = {
           name: name,
           nullable: nullable,
-          description: description,
+          description: description || @model_type.columns_hash[attribute.to_s]&.comment,
           deprecation_reason: deprecation_reason,
         }
 
