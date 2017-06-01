@@ -41,10 +41,16 @@ module GraphQL
       def attr(attribute, name: attribute.to_s.camelize(:lower), nullable: nil, description: nil, deprecation_reason: nil, &block)
         name = name.to_sym unless name.is_a?(Symbol)
 
+        # Get the description from the column, if it's not provided. Doesn't work in Rails 4 :(
+        unless description
+          column = @model_type.columns_hash[attribute.to_s]
+          description = column.comment if column&.respond_to?(:comment)
+        end
+
         options = {
           name: name,
           nullable: nullable,
-          description: description || @model_type.columns_hash[attribute.to_s]&.comment,
+          description: description,
           deprecation_reason: deprecation_reason,
         }
 
