@@ -386,6 +386,9 @@ them. It will destroy extra models, or create missing models.
 - Retrieving field metadata (for building an authorization middleware)
 - Validation error exceptions
 
+## Getting Help
+
+The best way to get ahold of me (@theorygeek) is in the #ruby channel on the [GraphQL Slack](https://graphql-slack.herokuapp.com/). Or feel free to open a GitHub issue (or PR), although to my shame, I'm not very good at responding to those (sorry, I'm trying to get better 😞).
 
 ## Development
 
