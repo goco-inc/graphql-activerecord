@@ -38,7 +38,7 @@ EmployeeGraph = GraphQL::ObjectType.define do
 end
 ```
 
-Then in your query file
+Then in your query file:
 ```ruby
 Types::QueryType = GraphQL::ObjectType.define do
   name "Query"
