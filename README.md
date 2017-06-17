@@ -38,6 +38,22 @@ EmployeeGraph = GraphQL::ObjectType.define do
 end
 ```
 
+Then in your query file
+```ruby
+Types::QueryType = GraphQL::ObjectType.define do
+  name "Query"
+
+  field :employees, types[Types::EmployeeType] do
+    resolve -> (_obj, _args, _ctx) { Employee.all }
+  end
+
+  field :employee, Types::EmployeeType do
+    argument :id, !types.ID
+    resolve -> (obj, args, ctx) { Employee.find(args[:id])}
+  end
+end
+```
+
 You can also build a corresponding mutation, using a very similar syntax. Mutations are more complicated, since they involve
 not just changing the data, but also validating it. Here's an example:
 ```ruby
@@ -93,6 +109,15 @@ UpdateEmployeeMutation = GraphQL::Relay::Mutation.define do
 
     { employee: model }
   }
+end
+```
+
+In your mutation file:
+```ruby
+Types::MutationType = GraphQL::ObjectType.define do
+  name "Mutation"
+  
+  field :updateEmployee, Mutations::UpdateEmployee.field
 end
 ```
 
