@@ -204,6 +204,9 @@ GraphQL::Models.unknown_scalar = -> (type, klass, attribute) do
   case type
   when :uuid
     UuidType
+  when :daterange
+    # If you need separate input/output types, use this syntax:
+    GraphQL::Models::DatabaseTypes::TypeStruct.new(DateRangeInputType, DateRangeOutputType)
   else
     GraphQL::STRING_TYPE
   end

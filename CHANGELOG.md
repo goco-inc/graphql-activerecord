@@ -1,5 +1,8 @@
 # Changelog
 
+# [Unreleased]
+Added unknown_scalar proc: https://github.com/goco-inc/graphql-activerecord/pull/45
+
 # 0.12.3
 - If possible, try to get the description for a field from the column's comment in the database. (#40)
 - Automatically generated union types (for polymorphic associations) used `demodulize` on the class name. If your model is `Name::Spaced`, this fixes a bug where it generates an invalid name. (#42)
