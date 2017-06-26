@@ -38,7 +38,7 @@ require 'graphql/models/mutator'
 module GraphQL
   module Models
     class << self
-      attr_accessor :model_from_id, :authorize, :id_for_model, :model_to_graphql_type
+      attr_accessor :model_from_id, :authorize, :id_for_model, :model_to_graphql_type, :unknown_scalar
     end
 
     # Returns a promise that will traverse the associations and resolve to the model at the end of the path.

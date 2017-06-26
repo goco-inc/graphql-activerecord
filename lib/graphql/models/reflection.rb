@@ -49,8 +49,20 @@ module GraphQL::Models
 
           result = DatabaseTypes.registered_type(active_record_type.type)
 
-          if !result
-            raise "The type #{active_record_type} is not registered with DatabaseTypes (attribute #{attribute} on #{model_class.name})"
+          if result.nil? && GraphQL::Models.unknown_scalar
+            type = GraphQL::Models.unknown_scalar.call(active_record_type.type)
+
+            if type.is_a?(GraphQL::BaseType) && (type.unwrap.is_a?(GraphQL::ScalarType) || type.unwrap.is_a?(GraphQL::EnumType))
+              result = DatabaseTypes::TypeStruct.new(type, type)
+            elsif type.is_a?(DatabaseTypes::TypeStruct)
+              result = type
+            else
+              raise "Got unexpected value #{type.inspect} from `unknown_scalar` proc. Expected a GraphQL::ScalarType, GraphQL::EnumType, or GraphQL::Models::DatabaseTypes::TypeStruct."
+            end
+          end
+
+          if result.nil?
+            raise "Don't know how to map database type #{active_record_type.type.inspect} to a GraphQL type. Forget to register it with GraphQL::Models::DatabaseTypes? (attribute #{attribute} on #{model_class.name})"
           end
 
           # Arrays: Rails doesn't have a generalized way to detect arrays, so we use this method to do it:
