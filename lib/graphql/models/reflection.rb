@@ -50,7 +50,7 @@ module GraphQL::Models
           result = DatabaseTypes.registered_type(active_record_type.type)
 
           if result.nil? && GraphQL::Models.unknown_scalar
-            type = GraphQL::Models.unknown_scalar.call(active_record_type.type)
+            type = GraphQL::Models.unknown_scalar.call(active_record_type.type, model_class, attribute)
 
             if type.is_a?(GraphQL::BaseType) && (type.unwrap.is_a?(GraphQL::ScalarType) || type.unwrap.is_a?(GraphQL::EnumType))
               result = DatabaseTypes::TypeStruct.new(type, type)
