@@ -1,7 +1,7 @@
 # Changelog
 
-# [Unreleased]
-Added unknown_scalar proc: https://github.com/goco-inc/graphql-activerecord/pull/45
+# 0.12.4
+Added the `GraphQL::Models.unknown_scalar` option (#45)
 
 # 0.12.3
 - If possible, try to get the description for a field from the column's comment in the database. (#40)
