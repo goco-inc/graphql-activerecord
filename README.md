@@ -198,6 +198,21 @@ GraphQL::Models::DatabaseTypes.register(:decimal, "DecimalType")
 GraphQL::Models::DatabaseTypes.register(:date, DateType, DateInputType)
 ```
 
+You can also provide a proc, if you want a catch-all, or if it's different for different models:
+```ruby
+GraphQL::Models.unknown_scalar = -> (type, klass, attribute) do
+  case type
+  when :uuid
+    UuidType
+  when :daterange
+    # If you need separate input/output types, use this syntax:
+    GraphQL::Models::DatabaseTypes::TypeStruct.new(DateRangeInputType, DateRangeOutputType)
+  else
+    GraphQL::STRING_TYPE
+  end
+end
+```
+
 #### Nullability of attributes
 The gem will mark a field as non-nullable if:
 - the database column is non-null
