@@ -62,6 +62,7 @@ module GraphQL::Models
           end
 
           if result.nil?
+            # rubocop:disable Metrics/LineLength
             raise "Don't know how to map database type #{active_record_type.type.inspect} to a GraphQL type. Forget to register it with GraphQL::Models::DatabaseTypes? (attribute #{attribute} on #{model_class.name})"
           end
 
