@@ -21,7 +21,7 @@ module GraphQL::Models
           unless field_names.empty?
             enum = GraphQL::EnumType.define do
               name "#{map_name_prefix}UnsettableFields"
-              field_names.each { |n| value(n, n.titleize, value: n) }
+              field_names.each { |n| value(n, n.to_s.titleize, value: n) }
             end
 
             input_field('unsetFields', types[!enum])

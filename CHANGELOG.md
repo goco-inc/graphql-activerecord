@@ -1,5 +1,8 @@
 # Changelog
 
+# 0.12.5
+Fixed a bug where `titleize` is sometimes called on symbols.
+
 # 0.12.4
 Added the `GraphQL::Models.unknown_scalar` option (#45)
 
