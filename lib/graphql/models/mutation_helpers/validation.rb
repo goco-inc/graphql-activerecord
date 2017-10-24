@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 module GraphQL::Models
   module MutationHelpers
-    def self.validate_changes(inputs, field_map, root_model, _context, all_changes)
+    def self.validate_changes(inputs, field_map, root_model, context, all_changes)
       invalid_fields = {}
       unknown_errors = []
 
@@ -21,7 +21,7 @@ module GraphQL::Models
             add_error(attribute, message, attrs_to_field[attribute], invalid_fields)
           else
             # Didn't provide a value, expensive check... trace down the input field
-            path = detect_input_path_for_attribute(model, attribute, inputs, field_map, root_model)
+            path = detect_input_path_for_attribute(model, attribute, inputs, field_map, root_model, context)
 
             if path
               add_error(attribute, message, path, invalid_fields)
@@ -54,7 +54,7 @@ module GraphQL::Models
     end
 
     # Given a model and an attribute, returns the path of the input field that would modify that attribute
-    def self.detect_input_path_for_attribute(target_model, attribute, inputs, field_map, starting_model)
+    def self.detect_input_path_for_attribute(target_model, attribute, inputs, field_map, starting_model, context)
       # Case 1: The input field is inside of this field map.
       candidate_fields = field_map.fields.select { |f| f[:attribute] == attribute }
 
@@ -85,10 +85,10 @@ module GraphQL::Models
         next if candidate_model.nil?
 
         # Match up the inputs with the models, and then check each of them.
-        candidate_matches = match_inputs_to_models(candidate_model, child_map, inputs[child_map.name], [])
+        candidate_matches = match_inputs_to_models(candidate_model, child_map, inputs[child_map.name], [], context)
 
         candidate_matches.each do |m|
-          result = detect_input_path_for_attribute(target_model, attribute, m[:child_inputs], child_map, m[:child_model])
+          result = detect_input_path_for_attribute(target_model, attribute, m[:child_inputs], child_map, m[:child_model], context)
           next if result.nil?
 
           path = Array.wrap(result)

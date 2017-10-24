@@ -14,8 +14,8 @@ module GraphQL::Models
         end
 
         if field_map.leave_null_unchanged?
-          field_names = field_map.fields.select { |f| !f[:required] }.map { |f| f[:name] }
-          field_names += field_map.nested_maps.reject(&:required).map(&:name)
+          field_names = field_map.fields.select { |f| !f[:required] }.map { |f| f[:name].to_s }
+          field_names += field_map.nested_maps.reject(&:required).map { |fld| fld.name.to_s }
           field_names = field_names.sort
 
           unless field_names.empty?
