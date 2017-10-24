@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.12.6
+- Fixed a bug when you used a `nested` mutator, and provided a symbol for the `:name` kwarg
+- Fixed a bug where the `context` parameter was not being passed to `MutationHelpers::match_inputs_to_models`
+
 # 0.12.5
 Fixed a bug where `titleize` is sometimes called on symbols.
 
