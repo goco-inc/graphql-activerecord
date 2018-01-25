@@ -11,7 +11,7 @@ In the process, this gem also converts `snake_case` attribute names into `camelC
 
 Here's an example:
 ```ruby
-EmployeeGraph = GraphQL::ObjectType.define do
+EmployeeType = GraphQL::ObjectType.define do
   name "Employee"
 
   # Looks for an Active Record model called "Employee"
@@ -40,14 +40,14 @@ end
 
 Then in your query file:
 ```ruby
-Types::QueryType = GraphQL::ObjectType.define do
+QueryType = GraphQL::ObjectType.define do
   name "Query"
 
-  field :employees, types[Types::EmployeeType] do
+  field :employees, types[EmployeeType] do
     resolve -> (_obj, _args, _ctx) { Employee.all }
   end
 
-  field :employee, Types::EmployeeType do
+  field :employee, EmployeeType do
     argument :id, !types.ID
     resolve -> (obj, args, ctx) { Employee.find(args[:id])}
   end
@@ -86,7 +86,7 @@ UpdateEmployeeMutation = GraphQL::Relay::Mutation.define do
     end
   end
 
-  return_field :employee, EmployeeGraph
+  return_field :employee, EmployeeType
 
   resolve -> (inputs, context) {
     # Fetch (or create) the model that the mutation should change
@@ -114,10 +114,10 @@ end
 
 In your mutation file:
 ```ruby
-Types::MutationType = GraphQL::ObjectType.define do
+MutationType = GraphQL::ObjectType.define do
   name "Mutation"
   
-  field :updateEmployee, Mutations::UpdateEmployee.field
+  field :updateEmployee, UpdateEmployeeMutation.field
 end
 ```
 
@@ -333,7 +333,7 @@ end
 MyModel.graphql_enum_types[:status]
 
 # When you use it inside of your GraphQL schema, it'll know to use the GraphQL enum type:
-MyModelGraph = GraphQL::ObjectType.define do
+MyModelType = GraphQL::ObjectType.define do
   backed_by_model :my_model do
     attr :status
   end
