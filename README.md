@@ -139,8 +139,7 @@ Finally, you need to set a few options on your schema:
 ```ruby
 GraphQL::Schema.define do
   # Set up the graphql-batch gem
-  lazy_resolve(Promise, :sync)
-  instrument(:query, GraphQL::Batch::Setup)
+  use GraphQL::Batch
 
   # Set up the graphql-activerecord gem
   instrument(:field, GraphQL::Models::Instrumentation.new)
