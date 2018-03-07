@@ -7,13 +7,13 @@ module GraphQL::Models
           field_type = f[:type]
 
           if f[:required] && !field_map.leave_null_unchanged?
-            field_type = field_type.to_non_null_type
+            field_type = field_type.to_non_null_type unless field_type.non_null?
           end
 
           input_field(f[:name], field_type)
         end
 
-        if field_map.leave_null_unchanged?
+        if field_map.leave_null_unchanged? && field_map.legacy_nulls
           field_names = field_map.fields.select { |f| !f[:required] }.map { |f| f[:name].to_s }
           field_names += field_map.nested_maps.reject(&:required).map { |fld| fld.name.to_s }
           field_names = field_names.sort

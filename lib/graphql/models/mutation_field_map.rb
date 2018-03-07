@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 module GraphQL::Models
   class MutationFieldMap
-    attr_accessor :model_type, :find_by, :null_behavior, :fields, :nested_maps
+    attr_accessor :model_type, :find_by, :null_behavior, :fields, :nested_maps, :legacy_nulls
 
     # These are used when this is a proxy_to or a nested field map
     attr_accessor :name, :association, :has_many, :required, :path
 
-    def initialize(model_type, find_by:, null_behavior:)
+    def initialize(model_type, find_by:, null_behavior:, legacy_nulls:)
       raise ArgumentError, "model_type must be a model" if model_type && !(model_type <= ActiveRecord::Base)
       raise ArgumentError, "null_behavior must be :set_null or :leave_unchanged" unless [:set_null, :leave_unchanged].include?(null_behavior)
 
@@ -16,6 +16,7 @@ module GraphQL::Models
       @model_type = model_type
       @find_by = Array.wrap(find_by)
       @null_behavior = null_behavior
+      @legacy_nulls = legacy_nulls
 
       @find_by.each { |f| attr(f) }
     end
@@ -74,7 +75,7 @@ module GraphQL::Models
         klass = nil
       end
 
-      proxy = MutationFieldMap.new(klass, find_by: nil, null_behavior: null_behavior)
+      proxy = MutationFieldMap.new(klass, find_by: nil, null_behavior: null_behavior, legacy_nulls: legacy_nulls)
       proxy.association = association
       proxy.instance_exec(&block)
 
@@ -116,7 +117,7 @@ module GraphQL::Models
       has_many = reflection.macro == :has_many
       required = Reflection.is_required(model_type, association)
 
-      map = MutationFieldMap.new(reflection.klass, find_by: find_by, null_behavior: null_behavior)
+      map = MutationFieldMap.new(reflection.klass, find_by: find_by, null_behavior: null_behavior, legacy_nulls: legacy_nulls)
       map.name = name || association.to_s.camelize(:lower)
       map.association = association.to_s
       map.has_many = has_many

@@ -53,8 +53,8 @@ module GraphQL::Models
   class MutatorDefinition
     attr_accessor :field_map
 
-    def initialize(model_type, null_behavior:)
-      @field_map = MutationFieldMap.new(model_type, find_by: nil, null_behavior: null_behavior)
+    def initialize(model_type, null_behavior:, legacy_nulls:)
+      @field_map = MutationFieldMap.new(model_type, find_by: nil, null_behavior: null_behavior, legacy_nulls: legacy_nulls)
     end
 
     def mutator(root_model, inputs, context)
