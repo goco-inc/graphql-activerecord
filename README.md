@@ -1,5 +1,23 @@
 # GraphQL::Models
 
+## WARNING!
+This gem was designed as a helper for building GraphQL schema's based on the [`graphql`](https://github.com/rmosolgo/graphql-ruby) gem. Primarily, it was meant to reduce redundancy when your object types were virtually identical to the attributes on your models in a few ways:
+1. It uses some clever tricks to automatically infer field types based on the data types of your database columns
+2. It automatically camelizes your attributes names
+3. It has some helpers to optimize association loading
+
+But in the time since I originally wrote this gem, a lot has transpired in the GraphQL world:
+- For #2: The 1.8 release of the graphql gem solves field camelization
+- For #3: Better solutions for association loading, that aren't quite as heavy as this library, have surfaced. One example is outlined in a [gist](https://gist.github.com/theorygeek/a1a59a2bf9c59e4b3706ac68d12c8434) that I wrote on Association Loading. That gist has proven to be more popular than this library 😁
+
+I don't know if there's a good solution out there for #1, but it was probably the least important problem to solve.
+
+We use GraphQL extensively at GoCo. Our schema has thousands of types. We'll be rethinking our implementation soon, and taking a closer look at the patterns that we use to DRY up our schema definition, to see if there are better patterns in the 1.8+ world.
+
+This gem may evolve into something better, or we may eventually deprecate it. But as of right now, I can't recommend that you build any major projects on top of it, since its future is a bit uncertain. I apologize if that makes more work for you :( but I want to be honest about the state of the project.
+
+## Overview
+
 This gem is designed to help you map Active Record models to GraphQL types, both for queries and mutations, using the [`graphql`](https://github.com/rmosolgo/graphql-ruby)
 gem. It assumes that you're using Rails and have `graphql-batch` set up.
 
