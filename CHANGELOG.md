@@ -1,5 +1,11 @@
 # Changelog
 
+# 0.13.0
+Changed the way that null values are handled inside of mutators. Take a look at [(#49)](https://github.com/goco-inc/graphql-activerecord/pull/49)
+for details. If you need to get back to the old behavior (ie, `unsetFields`), you can either:
+- Add the `legacy_nulls: true` option when defining your mutator, or
+- Set `GraphQL::Models.legacy_nulls = true` in an initializer
+
 # 0.12.6
 - Fixed a bug when you used a `nested` mutator, and provided a symbol for the `:name` kwarg
 - Fixed a bug where the `context` parameter was not being passed to `MutationHelpers::match_inputs_to_models`
