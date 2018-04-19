@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GraphQL::Models
   module MutationHelpers
     def self.apply_changes(field_map, model, inputs, context)
@@ -13,7 +14,7 @@ module GraphQL::Models
         prep_leave_unchanged(inputs)
       else
         prep_set_null(field_map, inputs)
-      end      
+      end
 
       values.each do |name, value|
         field_def = field_map.fields.detect { |f| f[:name] == name }

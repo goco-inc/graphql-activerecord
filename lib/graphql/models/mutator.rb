@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GraphQL::Models
   class Mutator
     attr_accessor :field_map, :root_model, :inputs, :context

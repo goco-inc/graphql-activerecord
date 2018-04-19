@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GraphQL
   module Models
     module DefinitionHelpers
@@ -6,7 +7,7 @@ module GraphQL
         reflection = model_type.reflect_on_association(association)
         raise ArgumentError, "Association #{association} wasn't found on model #{model_type.name}" unless reflection
         raise ArgumentError, "Cannot proxy to polymorphic association #{association} on model #{model_type.name}" if reflection.polymorphic?
-        raise ArgumentError, "Cannot proxy to #{reflection.macro} association #{association} on model #{model_type.name}" unless [:has_one, :belongs_to].include?(reflection.macro)
+        raise ArgumentError, "Cannot proxy to #{reflection.macro} association #{association} on model #{model_type.name}" unless %i[has_one belongs_to].include?(reflection.macro)
 
         return unless block_given?
 
@@ -56,7 +57,7 @@ module GraphQL
         reflection = model_type.reflect_on_association(association)
 
         raise ArgumentError, "Association #{association} wasn't found on model #{model_type.name}" unless reflection
-        raise ArgumentError, "Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_one" unless [:has_one, :belongs_to].include?(reflection.macro)
+        raise ArgumentError, "Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_one" unless %i[has_one belongs_to].include?(reflection.macro)
 
         # Define the field for the association itself
 

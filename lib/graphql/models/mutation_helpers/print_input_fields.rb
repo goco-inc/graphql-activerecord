@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GraphQL::Models
   module MutationHelpers
     def self.print_input_fields(field_map, definer, map_name_prefix)
@@ -14,7 +15,7 @@ module GraphQL::Models
         end
 
         if field_map.leave_null_unchanged? && field_map.legacy_nulls
-          field_names = field_map.fields.select { |f| !f[:required] }.map { |f| f[:name].to_s }
+          field_names = field_map.fields.reject { |f| f[:required] }.map { |f| f[:name].to_s }
           field_names += field_map.nested_maps.reject(&:required).map { |fld| fld.name.to_s }
           field_names = field_names.sort
 

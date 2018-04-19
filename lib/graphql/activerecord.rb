@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'active_support'
 require 'active_record'
 require 'graphql'
@@ -75,7 +76,7 @@ module GraphQL
 
     def self.define_mutator(definer, model_type, null_behavior: :leave_unchanged, legacy_nulls: GraphQL::Models.legacy_nulls, &block)
       legacy_nulls ||= false
-      
+
       # HACK: To get the name of the mutation, to avoid possible collisions with other type names
       prefix = definer.instance_variable_get(:@target).name
 

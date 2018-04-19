@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # This is a helper class. It lets you build simple DSL's. Methods called against the class are
 # converted into attributes in a hash.
 module GraphQL

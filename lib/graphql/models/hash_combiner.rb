@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GraphQL::Models::HashCombiner
   class << self
     # Takes a set of hashes that represent conditions, and combines them into the smallest number of hashes

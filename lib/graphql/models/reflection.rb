@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # Exposes utility methods for getting metadata out of active record models
 module GraphQL::Models
   module Reflection
@@ -64,6 +65,7 @@ module GraphQL::Models
           if result.nil?
             # rubocop:disable Metrics/LineLength
             raise "Don't know how to map database type #{active_record_type.type.inspect} to a GraphQL type. Forget to register it with GraphQL::Models::DatabaseTypes? (attribute #{attribute} on #{model_class.name})"
+            # rubocop:enable Metrics/LineLength
           end
 
           # Arrays: Rails doesn't have a generalized way to detect arrays, so we use this method to do it:

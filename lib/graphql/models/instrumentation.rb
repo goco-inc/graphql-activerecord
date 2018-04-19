@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class GraphQL::Models::Instrumentation
   # @param skip_nil_models If true, field resolvers (in proxy_to or backed_by_model blocks) will not be invoked if the model is nil.
   def initialize(skip_nil_models = true)
