@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GraphQL
   module Models
     module ActiveRecordExtension
@@ -24,7 +25,7 @@ module GraphQL
       extend ::ActiveSupport::Concern
       class_methods do
         def graphql_enum_types
-          @_graphql_enum_types ||= EnumTypeHash.new
+          @graphql_enum_types ||= EnumTypeHash.new
         end
 
         # Defines a GraphQL enum type on the model

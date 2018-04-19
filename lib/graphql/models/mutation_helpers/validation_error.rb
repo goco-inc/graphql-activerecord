@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GraphQL::Models
   module MutationHelpers
     class ValidationError < GraphQL::ExecutionError

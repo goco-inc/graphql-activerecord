@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'active_support'
 require 'active_record'
 require 'graphql'
@@ -39,6 +40,7 @@ module GraphQL
   module Models
     class << self
       attr_accessor :model_from_id, :authorize, :id_for_model, :model_to_graphql_type, :unknown_scalar
+      attr_accessor :legacy_nulls
     end
 
     # Returns a promise that will traverse the associations and resolve to the model at the end of the path.
@@ -72,11 +74,13 @@ module GraphQL
       authorize.call(context, model, action)
     end
 
-    def self.define_mutator(definer, model_type, null_behavior:, &block)
+    def self.define_mutator(definer, model_type, null_behavior: :leave_unchanged, legacy_nulls: GraphQL::Models.legacy_nulls, &block)
+      legacy_nulls ||= false
+
       # HACK: To get the name of the mutation, to avoid possible collisions with other type names
       prefix = definer.instance_variable_get(:@target).name
 
-      mutator_definition = MutatorDefinition.new(model_type, null_behavior: null_behavior)
+      mutator_definition = MutatorDefinition.new(model_type, null_behavior: null_behavior, legacy_nulls: legacy_nulls)
       mutator_definition.field_map.instance_exec(&block)
       MutationHelpers.print_input_fields(mutator_definition.field_map, definer, "#{prefix}Input")
       mutator_definition

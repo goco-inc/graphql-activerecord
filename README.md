@@ -83,7 +83,7 @@ UpdateEmployeeMutation = GraphQL::Relay::Mutation.define do
   # For mutations, you create a mutator definition. This will add the input fields to your
   # mutation, and also return an object that you'll use in the resolver to perform the mutation.
   # The parameters you pass are explained below.
-  mutator_definition = GraphQL::Models.define_mutator(self, Employee, null_behavior: :leave_unchanged) do
+  mutator_definition = GraphQL::Models.define_mutator(self, Employee) do
     attr :title
     attr :salary
 
@@ -94,7 +94,7 @@ UpdateEmployeeMutation = GraphQL::Relay::Mutation.define do
 
       # You can use nested input object types to allow making changes across associations with a single mutation.
       # Unlike querying, you need to be explicit about what fields on associated objects can be changed.
-      nested :address, null_behavior: :set_null do
+      nested :address do
         attr :line_1
         attr :line_2
         attr :city
@@ -368,13 +368,12 @@ You can also manually specify the type to use, if you just want the type mapping
 When you define a mutation, there are a few parameters that you need to pass. Here's an example:
 
 ```ruby
-mutator_definition = GraphQL::Models.define_mutator(self, Employee, null_behavior: :leave_unchanged)
+mutator_definition = GraphQL::Models.define_mutator(self, Employee)
 ```
 
 The parameters are:
 - The definer object: it needs this so that it can create the input fields. You should always pass `self` for this parameter.
 - The model class that the mutator is changing: it needs this so that it can map attributes to the correct input types.
-- `null_behavior`: this lets you choose how null values are treated. It's explained below.
 
 #### Virtual Attributes
 In your mutator, you can specify virtual attributes on your model, you just need to provide the type:
@@ -382,39 +381,30 @@ In your mutator, you can specify virtual attributes on your model, you just need
 attr :some_fake_attribute, type: types.String
 ```
 
-#### null_behavior
+#### Implicit Null Values
 
-When you build a mutation, you have two options that control how null values are treated. They are meant to allow you
-to choose behavior similar to HTTP PATCH or HTTP POST, where you may want to update just part of a model without having to supply
-values for every field.
+By default, input fields that are not supplied to a mutation (ie, they are left blank when the mutation is executed) will
+be ignored. You must explicitly provide a value (including `null`) for the attribute to be updated.
 
-You specify which option you'd like using the `null_behavior` parameter when defining the mutation:
-- `leave_unchanged` means that if the input field contains a null value, it is ignored
-- `set_null` means that if the input field contains a null value, the attribute will actually be set to `nil`
+You can override this behavior by using the `null_behavior: :set_null` option. This will cause two side-effects:
+- The input fields on your mutation will be marked non-null if they are required in your model
+- If any input field is not supplied, it will be treated as if the value `null` was actually supplied.
 
-##### set_null
-The `set_null` option is the simpler of the two, and you should probably default to using that option. When you pick this option,
-null values behave as you would expect: they cause the attribute to be set to `nil`.
-
-But another important side-effect is that the input fields on the mutation will be marked as non-nullable if the underlying
-database column is not nullable, or if there is an unconditional presence validator on that field.
-
-##### leave_unchanged
-If you select this option, any input fields that contain null values will be ignored. Instead, if you really do want to set a
-field to null, the gem adds a field called `unsetFields`. It takes an array of field names, and it will set all of those fields
-to null.
-
-If the field is not nullable in the database, or it has an unconditional presence validator, you cannot pass it to `unsetFields`.
-Also, if _all_ of the fields meet this criteria, the gem does not even create the `unsetFields` field.
-
-The important side-effect here is that `leave_unchanged` causes all of the input fields on the mutation to be nullable.
+Example:
+```ruby
+nested :emergency_contacts, null_behavior: :set_null do
+  attr :first_name
+  attr :last_name
+  attr :phone
+end
+```
 
 ### Mutations and has_many associations
 You can create mutations that update models across a `has_many` association, by using a `nested` block just like you would for
 `has_one` or `belongs_to` associations:
 
 ```ruby
-nested :emergency_contacts, null_behavior: :set_null do
+nested :emergency_contacts do
   attr :first_name
   attr :last_name
   attr :phone
@@ -424,7 +414,7 @@ end
 By default, inputs are matched to associated models by position (ie, the first input to the first model, etc). However, if you
 have an attribute that should instead be used to match them, you can specify it:
 ```ruby
-nested :emergency_contacts, find_by: :priority, null_behavior: :set_null do
+nested :emergency_contacts, find_by: :priority do
   attr :first_name
   attr :last_name
   attr :phone
@@ -434,8 +424,8 @@ end
 This causes the gem to automatically include `priority` as an input field. You could also manually specify the
 `priority` field if you wanted to override its name or type.
 
-Also, an important note is that the gem assumes that you are passing up _all_ of the associated models, and not just some of
-them. It will destroy extra models, or create missing models.
+Also, an important note is that the gem assumes that your input is providing values for _all_ of the associated models, and not just
+some of them. It will destroy extra models, or create missing models.
 
 ### Other things that need to be documented
 - Custom scalar types

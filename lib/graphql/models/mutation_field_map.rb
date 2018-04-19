@@ -1,14 +1,15 @@
 # frozen_string_literal: true
+
 module GraphQL::Models
   class MutationFieldMap
-    attr_accessor :model_type, :find_by, :null_behavior, :fields, :nested_maps
+    attr_accessor :model_type, :find_by, :null_behavior, :fields, :nested_maps, :legacy_nulls
 
     # These are used when this is a proxy_to or a nested field map
     attr_accessor :name, :association, :has_many, :required, :path
 
-    def initialize(model_type, find_by:, null_behavior:)
+    def initialize(model_type, find_by:, null_behavior:, legacy_nulls:)
       raise ArgumentError, "model_type must be a model" if model_type && !(model_type <= ActiveRecord::Base)
-      raise ArgumentError, "null_behavior must be :set_null or :leave_unchanged" unless [:set_null, :leave_unchanged].include?(null_behavior)
+      raise ArgumentError, "null_behavior must be :set_null or :leave_unchanged" unless %i[set_null leave_unchanged].include?(null_behavior)
 
       @fields = []
       @nested_maps = []
@@ -16,6 +17,7 @@ module GraphQL::Models
       @model_type = model_type
       @find_by = Array.wrap(find_by)
       @null_behavior = null_behavior
+      @legacy_nulls = legacy_nulls
 
       @find_by.each { |f| attr(f) }
     end
@@ -65,7 +67,7 @@ module GraphQL::Models
       reflection = model_type&.reflect_on_association(association)
 
       if reflection
-        unless [:belongs_to, :has_one].include?(reflection.macro)
+        unless %i[belongs_to has_one].include?(reflection.macro)
           raise ArgumentError, "Cannot proxy to #{reflection.macro} association #{association} from #{model_type.name}"
         end
 
@@ -74,7 +76,7 @@ module GraphQL::Models
         klass = nil
       end
 
-      proxy = MutationFieldMap.new(klass, find_by: nil, null_behavior: null_behavior)
+      proxy = MutationFieldMap.new(klass, find_by: nil, null_behavior: null_behavior, legacy_nulls: legacy_nulls)
       proxy.association = association
       proxy.instance_exec(&block)
 
@@ -97,7 +99,7 @@ module GraphQL::Models
       end
     end
 
-    def nested(association, find_by: nil, null_behavior:, name: nil, has_many: false, &block)
+    def nested(association, find_by: nil, null_behavior:, name: nil, &block)
       unless model_type
         raise ArgumentError, "Cannot use `nested` unless the model type is known at build time."
       end
@@ -116,7 +118,7 @@ module GraphQL::Models
       has_many = reflection.macro == :has_many
       required = Reflection.is_required(model_type, association)
 
-      map = MutationFieldMap.new(reflection.klass, find_by: find_by, null_behavior: null_behavior)
+      map = MutationFieldMap.new(reflection.klass, find_by: find_by, null_behavior: null_behavior, legacy_nulls: legacy_nulls)
       map.name = name || association.to_s.camelize(:lower)
       map.association = association.to_s
       map.has_many = has_many

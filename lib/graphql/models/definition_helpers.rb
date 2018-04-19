@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'ostruct'
 
 module GraphQL
@@ -66,7 +67,7 @@ module GraphQL
         return false unless context
 
         reflection = association.reflection
-        return false unless [:has_one, :belongs_to].include?(reflection.macro)
+        return false unless %i[has_one belongs_to].include?(reflection.macro)
 
         if reflection.macro == :belongs_to
           target_id = model.send(reflection.foreign_key)
@@ -123,7 +124,7 @@ module GraphQL
         field_name = field_name.to_s
 
         field_meta = graph_type.instance_variable_get(:@field_metadata)
-        field_meta = graph_type.instance_variable_set(:@field_metadata, {}) unless field_meta
+        field_meta ||= graph_type.instance_variable_set(:@field_metadata, {})
         field_meta[field_name] = OpenStruct.new(metadata).freeze
       end
     end

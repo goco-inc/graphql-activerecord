@@ -5,7 +5,7 @@ AllCops:
     - bin/**/*
     - vendor/gems/**/*
 
-Lint/EndAlignment:
+Layout/EndAlignment:
   EnforcedStyleAlignWith: variable
   Enabled: false
 
@@ -42,7 +42,7 @@ Style/Documentation:
 Style/DoubleNegation:
   Enabled: false
 
-Style/ExtraSpacing:
+Layout/ExtraSpacing:
   AllowForAlignment: false
 
 Style/FrozenStringLiteralComment:
@@ -57,16 +57,16 @@ Style/HashSyntax:
 Style/IfUnlessModifier:
   Enabled: false
 
-Style/IndentArray:
+Layout/IndentArray:
   EnforcedStyle: consistent
 
-Style/IndentHash:
+Layout/IndentHash:
   EnforcedStyle: consistent
 
 Style/Lambda:
   EnforcedStyle: literal
 
-Style/MultilineMethodCallIndentation:
+Layout/MultilineMethodCallIndentation:
   Enabled: false
 
 Style/NegatedIf:
@@ -78,16 +78,19 @@ Style/NegatedWhile:
 Style/StringLiterals:
   Enabled: false
 
-Style/TrailingCommaInLiteral:
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: consistent_comma
+
+Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: consistent_comma
 
 Style/Attr:
   Enabled: false
 
-Style/SpaceInLambdaLiteral:
+Layout/SpaceInLambdaLiteral:
   EnforcedStyle: require_space
 
-Style/AlignParameters:
+Layout/AlignParameters:
   EnforcedStyle: with_fixed_indentation
 
 Style/WordArray:
@@ -103,7 +106,7 @@ Style/TrailingUnderscoreVariable:
 Style/TernaryParentheses:
   Enabled: false
 
-Style/PredicateName:
+Naming/PredicateName:
   Enabled: false
 
 Style/NumericPredicate:
@@ -115,14 +118,581 @@ Style/NumericLiterals:
 Style/ClassAndModuleChildren:
   Enabled: false
 
-Style/CaseIndentation:
+Layout/CaseIndentation:
   EnforcedStyle: end
 
 Style/BracesAroundHashParameters:
   Enabled: false
 
-Style/IndentationWidth:
+Layout/IndentationWidth:
   Enabled: false
 
 Style/BlockDelimiters:
   Enabled: false
+
+
+# The following cops are added between 0.47.1 and 0.55.0.
+# The configurations are default.
+# If you want to use a cop by default, remove a configuration for the cop from here.
+# If you want to disable a cop, change `Enabled` to false.
+
+# Supports --auto-correct
+Bundler/InsecureProtocolSource:
+  Description: The source `:gemcutter`, `:rubygems` and `:rubyforge` are deprecated
+    because HTTP requests are insecure. Please change your source to 'https://rubygems.org'
+    if possible, or 'http://rubygems.org' if not.
+  Enabled: true
+  Include:
+  - "**/*.gemfile"
+  - "**/Gemfile"
+  - "**/gems.rb"
+
+Gemspec/DuplicatedAssignment:
+  Description: An attribute assignment method calls should be listed only once in a
+    gemspec.
+  Enabled: true
+  Include:
+  - "**/*.gemspec"
+
+# Supports --auto-correct
+Gemspec/OrderedDependencies:
+  Description: Dependencies in the gemspec should be alphabetically sorted.
+  Enabled: true
+  Include:
+  - "**/*.gemspec"
+  TreatCommentsAsGroupSeparators: true
+
+Gemspec/RequiredRubyVersion:
+  Description: Checks that `required_ruby_version` of gemspec and `TargetRubyVersion`
+    of .rubocop.yml are equal.
+  Enabled: true
+  Include:
+  - "**/*.gemspec"
+
+# Supports --auto-correct
+Layout/ClassStructure:
+  Description: Enforces a configured order of definitions within a class body.
+  StyleGuide: https://github.com/bbatsov/ruby-style-guide#consistent-classes
+  Enabled: false
+  Categories:
+    module_inclusion:
+    - include
+    - prepend
+    - extend
+  ExpectedOrder:
+  - module_inclusion
+  - constants
+  - public_class_methods
+  - initializer
+  - public_methods
+  - protected_methods
+  - private_methods
+
+# Supports --auto-correct
+Layout/EmptyComment:
+  Description: Checks empty comment.
+  Enabled: true
+  AllowBorderComment: true
+  AllowMarginComment: true
+
+# Supports --auto-correct
+Layout/EmptyLineAfterMagicComment:
+  Description: Add an empty line after magic comments to separate them from code.
+  StyleGuide: "#separate-magic-comments-from-code"
+  Enabled: true
+
+# Supports --auto-correct
+Layout/EmptyLinesAroundArguments:
+  Description: Keeps track of empty lines around method arguments.
+  Enabled: true
+
+# Supports --auto-correct
+Layout/EmptyLinesAroundBeginBody:
+  Description: Keeps track of empty lines around begin-end bodies.
+  StyleGuide: "#empty-lines-around-bodies"
+  Enabled: true
+
+# Supports --auto-correct
+Layout/EmptyLinesAroundExceptionHandlingKeywords:
+  Description: Keeps track of empty lines around exception handling keywords.
+  StyleGuide: "#empty-lines-around-bodies"
+  Enabled: true
+
+# Supports --auto-correct
+Layout/IndentHeredoc:
+  Description: This cops checks the indentation of the here document bodies.
+  StyleGuide: "#squiggly-heredocs"
+  Enabled: true
+  EnforcedStyle: auto_detection
+  SupportedStyles:
+  - auto_detection
+  - squiggly
+  - active_support
+  - powerpack
+  - unindent
+
+# Supports --auto-correct
+Layout/SpaceInsideArrayLiteralBrackets:
+  Description: Checks the spacing inside array literal brackets.
+  Enabled: true
+  EnforcedStyle: no_space
+  SupportedStyles:
+  - space
+  - no_space
+  - compact
+  EnforcedStyleForEmptyBrackets: no_space
+  SupportedStylesForEmptyBrackets:
+  - space
+  - no_space
+
+# Supports --auto-correct
+Layout/SpaceInsideReferenceBrackets:
+  Description: Checks the spacing inside referential brackets.
+  Enabled: true
+  EnforcedStyle: no_space
+  SupportedStyles:
+  - space
+  - no_space
+  EnforcedStyleForEmptyBrackets: no_space
+  SupportedStylesForEmptyBrackets:
+  - space
+  - no_space
+
+Lint/AmbiguousBlockAssociation:
+  Description: Checks for ambiguous block association with method when param passed
+    without parentheses.
+  StyleGuide: "#syntax"
+  Enabled: true
+
+# Supports --auto-correct
+Lint/BigDecimalNew:
+  Description: "`BigDecimal.new()` is deprecated. Use `BigDecimal()` instead."
+  Enabled: true
+
+Lint/BooleanSymbol:
+  Description: Check for `:true` and `:false` symbols.
+  Enabled: true
+
+Lint/InterpolationCheck:
+  Description: Raise warning for interpolation in single q strs
+  Enabled: true
+
+Lint/MissingCopEnableDirective:
+  Description: Checks for a `# rubocop:enable` after `# rubocop:disable`
+  Enabled: true
+  MaximumRangeSize: .inf
+
+Lint/NestedPercentLiteral:
+  Description: Checks for nested percent literals.
+  Enabled: true
+
+Lint/NumberConversion:
+  Description: Checks unsafe usage of number conversion methods.
+  Enabled: false
+
+# Supports --auto-correct
+Lint/OrderedMagicComments:
+  Description: Checks the proper ordering of magic comments and whether a magic comment
+    is not placed before a shebang.
+  Enabled: true
+
+# Supports --auto-correct
+Lint/RedundantWithIndex:
+  Description: Checks for redundant `with_index`.
+  Enabled: true
+
+# Supports --auto-correct
+Lint/RedundantWithObject:
+  Description: Checks for redundant `with_object`.
+  Enabled: true
+
+Lint/RegexpAsCondition:
+  Description: Do not use regexp literal as a condition. The regexp literal matches
+    `$_` implicitly.
+  Enabled: true
+
+# Supports --auto-correct
+Lint/RescueType:
+  Description: Avoid rescuing from non constants that could result in a `TypeError`.
+  Enabled: true
+
+Lint/ReturnInVoidContext:
+  Description: Checks for return in void context.
+  Enabled: true
+
+# Supports --auto-correct
+Lint/ScriptPermission:
+  Description: Grant script file execute permission.
+  Enabled: true
+
+Lint/ShadowedArgument:
+  Description: Avoid reassigning arguments before they were used.
+  Enabled: true
+  IgnoreImplicitReferences: false
+
+# Supports --auto-correct
+Lint/UnneededCopEnableDirective:
+  Description: Checks for rubocop:enable comments that can be removed.
+  Enabled: true
+
+# Supports --auto-correct
+Lint/UnneededRequireStatement:
+  Description: Checks for unnecessary `require` statement.
+  Enabled: true
+
+Lint/UriEscapeUnescape:
+  Description: "`URI.escape` method is obsolete and should not be used. Instead, use
+    `CGI.escape`, `URI.encode_www_form` or `URI.encode_www_form_component` depending
+    on your specific use case. Also `URI.unescape` method is obsolete and should not
+    be used. Instead, use `CGI.unescape`, `URI.decode_www_form` or `URI.decode_www_form_component`
+    depending on your specific use case."
+  Enabled: true
+
+# Supports --auto-correct
+Lint/UriRegexp:
+  Description: Use `URI::DEFAULT_PARSER.make_regexp` instead of `URI.regexp`.
+  Enabled: true
+
+Naming/HeredocDelimiterCase:
+  Description: Use configured case for heredoc delimiters.
+  StyleGuide: "#heredoc-delimiters"
+  Enabled: true
+  EnforcedStyle: uppercase
+  SupportedStyles:
+  - lowercase
+  - uppercase
+
+Naming/HeredocDelimiterNaming:
+  Description: Use descriptive heredoc delimiters.
+  StyleGuide: "#heredoc-delimiters"
+  Enabled: true
+  Blacklist:
+  - !ruby/regexp /(^|\s)(EO[A-Z]{1}|END)(\s|$)/
+
+Naming/MemoizedInstanceVariableName:
+  Description: Memoized method name should match memo instance variable name.
+  Enabled: true
+
+Naming/UncommunicativeBlockParamName:
+  Description: Checks for block parameter names that contain capital letters, end in
+    numbers, or do not meet a minimal length.
+  Enabled: true
+  MinNameLength: 1
+  AllowNamesEndingInNumbers: true
+  AllowedNames: []
+  ForbiddenNames: []
+
+Naming/UncommunicativeMethodParamName:
+  Description: Checks for method parameter names that contain capital letters, end in
+    numbers, or do not meet a minimal length.
+  Enabled: true
+  MinNameLength: 3
+  AllowNamesEndingInNumbers: true
+  AllowedNames:
+  - io
+  - id
+  - to
+  - by
+  - 'on'
+  - in
+  - at
+  ForbiddenNames: []
+
+Performance/Caller:
+  Description: Use `caller(n..n)` instead of `caller`.
+  Enabled: true
+
+# Supports --auto-correct
+Performance/DoubleStartEndWith:
+  Description: Use `str.{start,end}_with?(x, ..., y, ...)` instead of `str.{start,end}_with?(x,
+    ...) || str.{start,end}_with?(y, ...)`.
+  Enabled: true
+  IncludeActiveSupportAliases: false
+
+Performance/UnfreezeString:
+  Description: Use unary plus to get an unfrozen string literal.
+  Enabled: true
+
+# Supports --auto-correct
+Performance/UriDefaultParser:
+  Description: Use `URI::DEFAULT_PARSER` instead of `URI::Parser.new`.
+  Enabled: true
+
+# Supports --auto-correct
+Rails/ActiveRecordAliases:
+  Description: 'Avoid Active Record aliases: Use `update` instead of `update_attributes`.
+    Use `update!` instead of `update_attributes!`.'
+  Enabled: true
+
+# Supports --auto-correct
+Rails/ActiveSupportAliases:
+  Description: 'Avoid ActiveSupport aliases of standard ruby methods: `String#starts_with?`,
+    `String#ends_with?`, `Array#append`, `Array#prepend`.'
+  Enabled: true
+
+# Supports --auto-correct
+Rails/ApplicationJob:
+  Description: Check that jobs subclass ApplicationJob.
+  Enabled: true
+
+# Supports --auto-correct
+Rails/ApplicationRecord:
+  Description: Check that models subclass ApplicationRecord.
+  Enabled: true
+
+# Supports --auto-correct
+Rails/Blank:
+  Description: Enforce using `blank?` and `present?`.
+  Enabled: true
+  NilOrEmpty: true
+  NotPresent: true
+  UnlessPresent: true
+
+Rails/CreateTableWithTimestamps:
+  Description: Checks the migration for which timestamps are not included when creating
+    a new table.
+  Enabled: true
+  Include:
+  - db/migrate/*.rb
+
+# Supports --auto-correct
+Rails/EnvironmentComparison:
+  Description: Favor `Rails.env.production?` over `Rails.env == 'production'`
+  Enabled: true
+
+Rails/HasManyOrHasOneDependent:
+  Description: Define the dependent option to the has_many and has_one associations.
+  StyleGuide: https://github.com/bbatsov/rails-style-guide#has_many-has_one-dependent-option
+  Enabled: true
+  Include:
+  - app/models/**/*.rb
+
+Rails/InverseOf:
+  Description: Checks for associations where the inverse cannot be determined automatically.
+  Enabled: true
+  Include:
+  - app/models/**/*.rb
+
+Rails/LexicallyScopedActionFilter:
+  Description: Checks that methods specified in the filter's `only` or `except` options
+    are explicitly defined in the controller.
+  StyleGuide: https://github.com/bbatsov/rails-style-guide#lexically-scoped-action-filter
+  Enabled: true
+  Include:
+  - app/controllers/**/*.rb
+
+# Supports --auto-correct
+Rails/Presence:
+  Description: Checks code that can be written more easily using `Object#presence` defined
+    by Active Support.
+  Enabled: true
+
+# Supports --auto-correct
+Rails/Present:
+  Description: Enforce using `blank?` and `present?`.
+  Enabled: true
+  NotNilAndNotEmpty: true
+  NotBlank: true
+  UnlessBlank: true
+
+# Supports --auto-correct
+Rails/RedundantReceiverInWithOptions:
+  Description: Checks for redundant receiver in `with_options`.
+  Enabled: true
+
+# Supports --auto-correct
+Rails/RelativeDateConstant:
+  Description: Do not assign relative date to constants.
+  Enabled: true
+
+Rails/UnknownEnv:
+  Description: Use correct environment name.
+  Enabled: true
+  Environments:
+  - development
+  - test
+  - production
+
+Security/Open:
+  Description: The use of Kernel#open represents a serious security risk.
+  Enabled: true
+
+# Supports --auto-correct
+Style/ColonMethodDefinition:
+  Description: 'Do not use :: for defining class methods.'
+  StyleGuide: "#colon-method-definition"
+  Enabled: true
+
+Style/CommentedKeyword:
+  Description: Do not place comments on the same line as certain keywords.
+  Enabled: true
+
+Style/DateTime:
+  Description: Use Date or Time over DateTime.
+  StyleGuide: "#date--time"
+  Enabled: true
+
+# Supports --auto-correct
+Style/Dir:
+  Description: Use the `__dir__` method to retrieve the canonicalized absolute path
+    to the current file.
+  Enabled: true
+
+# Supports --auto-correct
+Style/EmptyBlockParameter:
+  Description: Omit pipes for empty block parameters.
+  Enabled: true
+
+# Supports --auto-correct
+Style/EmptyLambdaParameter:
+  Description: Omit parens for empty lambda parameters.
+  Enabled: true
+
+# Supports --auto-correct
+Style/EmptyLineAfterGuardClause:
+  Description: Add empty line after guard clause.
+  Enabled: false
+
+Style/EvalWithLocation:
+  Description: Pass `__FILE__` and `__LINE__` to `eval` method, as they are used by
+    backtraces.
+  Enabled: true
+
+# Supports --auto-correct
+Style/ExpandPathArguments:
+  Description: Use `expand_path(__dir__)` instead of `expand_path('..', __FILE__)`.
+  Enabled: true
+
+Style/FormatStringToken:
+  Description: Use a consistent style for format string tokens.
+  Enabled: true
+  EnforcedStyle: annotated
+  SupportedStyles:
+  - annotated
+  - template
+  - unannotated
+
+# Supports --auto-correct
+Style/InverseMethods:
+  Description: Use the inverse method instead of `!.method` if an inverse method is
+    defined.
+  Enabled: true
+  InverseMethods:
+    :any?: :none?
+    :even?: :odd?
+    :==: :!=
+    :=~: :!~
+    :<: :>=
+    :>: :<=
+  InverseBlocks:
+    :select: :reject
+    :select!: :reject!
+
+# Supports --auto-correct
+Style/MinMax:
+  Description: Use `Enumerable#minmax` instead of `Enumerable#min` and `Enumerable#max`
+    in conjunction.'
+  Enabled: true
+
+# Supports --auto-correct
+Style/MixinGrouping:
+  Description: Checks for grouping of mixins in `class` and `module` bodies.
+  StyleGuide: "#mixin-grouping"
+  Enabled: true
+  EnforcedStyle: separated
+  SupportedStyles:
+  - separated
+  - grouped
+
+Style/MixinUsage:
+  Description: Checks that `include`, `extend` and `prepend` exists at the top level.
+  Enabled: true
+
+Style/MultipleComparison:
+  Description: Avoid comparing a variable with multiple items in a conditional, use
+    Array#include? instead.
+  Enabled: true
+
+# Supports --auto-correct
+Style/OrAssignment:
+  Description: Recommend usage of double pipe equals (||=) where applicable.
+  StyleGuide: "#double-pipe-for-uninit"
+  Enabled: true
+
+# Supports --auto-correct
+Style/RandomWithOffset:
+  Description: Prefer to use ranges when generating random numbers instead of integers
+    with offsets.
+  StyleGuide: "#random-numbers"
+  Enabled: true
+
+# Supports --auto-correct
+Style/RedundantConditional:
+  Description: Don't return true/false from a conditional.
+  Enabled: true
+
+# Supports --auto-correct
+Style/RescueStandardError:
+  Description: Avoid rescuing without specifying an error class.
+  Enabled: true
+  EnforcedStyle: explicit
+  SupportedStyles:
+  - implicit
+  - explicit
+
+# Supports --auto-correct
+Style/ReturnNil:
+  Description: Use return instead of return nil.
+  Enabled: false
+  EnforcedStyle: return
+  SupportedStyles:
+  - return
+  - return_nil
+
+# Supports --auto-correct
+Style/StderrPuts:
+  Description: Use `warn` instead of `$stderr.puts`.
+  StyleGuide: "#warn"
+  Enabled: true
+
+# Supports --auto-correct
+Style/StringHashKeys:
+  Description: Prefer symbols instead of strings as hash keys.
+  StyleGuide: "#symbols-as-keys"
+  Enabled: false
+
+# Supports --auto-correct
+Style/TrailingBodyOnClass:
+  Description: Class body goes below class statement.
+  Enabled: true
+
+# Supports --auto-correct
+Style/TrailingBodyOnMethodDefinition:
+  Description: Method body goes below definition.
+  Enabled: true
+
+# Supports --auto-correct
+Style/TrailingBodyOnModule:
+  Description: Module body goes below module statement.
+  Enabled: true
+
+# Supports --auto-correct
+Style/TrailingMethodEndStatement:
+  Description: Checks for trailing end statement on line of method body.
+  Enabled: true
+
+# Supports --auto-correct
+Style/UnpackFirst:
+  Description: Checks for accessing the first element of `String#unpack` instead of
+    using `unpack1`
+  Enabled: true
+
+# Supports --auto-correct
+Style/YodaCondition:
+  Description: Do not use literals as the first operand of a comparison.
+  Reference: https://en.wikipedia.org/wiki/Yoda_conditions
+  Enabled: true
+  EnforcedStyle: all_comparison_operators
+  SupportedStyles:
+  - all_comparison_operators
+  - equality_operators_only

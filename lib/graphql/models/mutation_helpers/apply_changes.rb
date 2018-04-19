@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GraphQL::Models
   module MutationHelpers
     def self.apply_changes(field_map, model, inputs, context)
@@ -7,7 +8,13 @@ module GraphQL::Models
 
       # Values will now contain the list of inputs that we should actually act on. Any null values should actually
       # be set to null, and missing fields should be skipped.
-      values = field_map.leave_null_unchanged? ? prep_leave_unchanged(inputs) : prep_set_null(field_map, inputs)
+      values = if field_map.leave_null_unchanged? && field_map.legacy_nulls
+        prep_legacy_leave_unchanged(inputs)
+      elsif field_map.leave_null_unchanged?
+        prep_leave_unchanged(inputs)
+      else
+        prep_set_null(field_map, inputs)
+      end
 
       values.each do |name, value|
         field_def = field_map.fields.detect { |f| f[:name] == name }
@@ -232,10 +239,10 @@ module GraphQL::Models
       end
     end
 
-    # If the field map has the option leave_null_unchanged, there's an `unsetFields` string array that contains the
-    # name of inputs that should be treated as if they are null. We handle that by removing null inputs, and then
-    # adding back any unsetFields with null values.
-    def self.prep_leave_unchanged(inputs)
+    # If the field map has the option leave_null_unchanged, and legacy_nulls is true, then there's an `unsetFields` string
+    # array that contains the name of inputs that should be treated as if they are null. We handle that by removing null
+    # inputs, and then adding back any unsetFields with null values.
+    def self.prep_legacy_leave_unchanged(inputs)
       # String key hash
       values = inputs.to_h.compact
 
@@ -247,6 +254,10 @@ module GraphQL::Models
       end
 
       values
+    end
+
+    def self.prep_leave_unchanged(inputs)
+      inputs.to_h
     end
 
     # Field map has the option to set_null. Any field that has the value null, or is missing, will be set to null.

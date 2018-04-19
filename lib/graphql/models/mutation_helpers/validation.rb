@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GraphQL::Models
   module MutationHelpers
     def self.validate_changes(inputs, field_map, root_model, context, all_changes)

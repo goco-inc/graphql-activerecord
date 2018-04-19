@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module GraphQL::Models
   module Helpers
     def self.orders_to_sql(orders)
