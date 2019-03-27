@@ -62,8 +62,10 @@ module GraphQL
         # Define the field for the association itself
 
         camel_name = options[:name]
-        association_graphql_type = resolve_has_one_type(reflection)
-        association_graphql_type = resolve_nullability(association_graphql_type, model_type, association, detect_nulls, options)
+        association_graphql_type = -> {
+          result = resolve_has_one_type(reflection)
+          resolve_nullability(result, model_type, association, detect_nulls, options)
+        }
 
         DefinitionHelpers.register_field_metadata(graph_type, camel_name, {
           macro: :has_one,
@@ -135,19 +137,26 @@ module GraphQL
         raise ArgumentError, "Association #{association} wasn't found on model #{model_type.name}" unless reflection
         raise ArgumentError, "Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_many_array" unless [:has_many].include?(reflection.macro)
 
-        association_type = options[:type] || GraphQL::Models.get_graphql_type!(reflection.klass)
+        association_type = -> {
+          result = options[:type] || GraphQL::Models.get_graphql_type!(reflection.klass)
+          
+          if !result.is_a?(GraphQL::ListType)
+            result = result.to_non_null_type.to_list_type
+          end
 
-        if !association_type.is_a?(GraphQL::ListType)
-          association_type = association_type.to_non_null_type.to_list_type
-        end
+          # The has_many associations are a little special. Instead of checking for a presence validator, we instead assume
+          # that the outer type should be non-null, unless detect_nulls is false. In other words, we prefer an empty
+          # array for the association, rather than null.
+          if (options[:nullable].nil? && detect_nulls) || options[:nullable] == false
+            result = result.to_non_null_type
+          end
+
+          result
+        }
 
         id_field_type = GraphQL::ID_TYPE.to_non_null_type.to_list_type
 
-        # The has_many associations are a little special. Instead of checking for a presence validator, we instead assume
-        # that the outer type should be non-null, unless detect_nulls is false. In other words, we prefer an empty
-        # array for the association, rather than null.
         if (options[:nullable].nil? && detect_nulls) || options[:nullable] == false
-          association_type = association_type.to_non_null_type
           id_field_type = id_field_type.to_non_null_type
         end
 
@@ -210,12 +219,15 @@ module GraphQL
         raise ArgumentError, "Association #{association} wasn't found on model #{model_type.name}" unless reflection
         raise ArgumentError, "Cannot include #{reflection.macro} association #{association} on model #{model_type.name} with has_many_connection" unless [:has_many].include?(reflection.macro)
 
-        connection_type = GraphQL::Models.get_graphql_type!(reflection.klass).connection_type
+        connection_type = -> {
+          result = GraphQL::Models.get_graphql_type!(reflection.klass).connection_type
+          if (options[:nullable].nil? && detect_nulls) || options[:nullable] == false
+            result = result.to_non_null_type
+          end  
 
-        if (options[:nullable].nil? && detect_nulls) || options[:nullable] == false
-          connection_type = connection_type.to_non_null_type
-        end
-
+          result
+        }
+        
         camel_name = options[:name].to_s
 
         DefinitionHelpers.register_field_metadata(graph_type, camel_name, {
