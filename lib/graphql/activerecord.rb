@@ -53,7 +53,7 @@ module GraphQL
 
     def self.load_relation(relation, fast_query: false)
       if fast_query
-        request = AttributeLoader::Request.new(relation.where_values_hash, Helpers.orders_to_sql(relation.orders))
+        request = AttributeLoader::Request.new(relation.where_values_hash, Helpers.orders_to_sql(relation.arel.orders))
         AttributeLoader.for(relation.klass).load(request)
       else
         request = RelationLoadRequest.new(relation)

@@ -18,7 +18,7 @@ module GraphQL
       def request
         AttributeLoader::Request.new(
           association.scope.where_values_hash,
-          Helpers.orders_to_sql(association.scope.orders)
+          Helpers.orders_to_sql(association.scope.arel.orders)
         )
       end
 
