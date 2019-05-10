@@ -93,8 +93,7 @@ module GraphQL::Models
           if refl.options.include?(:as)
             inverse_name = refl.options[:as]
             inverse_assoc = child_model.association(inverse_name)
-            inverse_assoc.target = model
-            inverse_assoc.inversed = true
+            inverse_assoc.inversed_from(model)
           end
 
           changes.push({ model_instance: child_model, action: :create })
