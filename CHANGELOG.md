@@ -1,5 +1,8 @@
 # Changelog
 
+# 0.13.1
+Add fixes in relationship inferencing by using inversed_from instead of `inversed`
+
 # 0.13.0
 Changed the way that null values are handled inside of mutators. Take a look at [(#49)](https://github.com/goco-inc/graphql-activerecord/pull/49)
 for details. If you need to get back to the old behavior (ie, `unsetFields`), you can either:
