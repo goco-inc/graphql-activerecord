@@ -14,8 +14,9 @@ module GraphQL::Models
           .map { |c| [c[:attribute], c[:input_path]] }
           .to_h
 
-        model.errors.each do |attribute, message|
-          attribute = attribute.to_sym if attribute.is_a?(String)
+        model.errors.each do |error|
+          attribute = error.attribute
+          message = error.message
 
           # Cheap check, see if this is a field that the user provided a value for...
           if attrs_to_field.include?(attribute)
